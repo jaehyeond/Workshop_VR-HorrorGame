@@ -330,7 +330,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 12364294}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
@@ -2495,6 +2495,7 @@ GameObject:
   - component: {fileID: 243075213}
   - component: {fileID: 243075212}
   - component: {fileID: 243075211}
+  - component: {fileID: 243075216}
   m_Layer: 0
   m_Name: '[BuildingBlock] Camera Rig'
   m_TagString: Untagged
@@ -2657,6 +2658,27 @@ Transform:
   - {fileID: 265577744}
   m_Father: {fileID: 1704169285}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &243075216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 243075210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e84568e1c073c9e498aaeb8195c158fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  headsetTransform: {fileID: 0}
+  leftControllerTransform: {fileID: 0}
+  rightControllerTransform: {fileID: 0}
+  headAnchor: {fileID: 0}
+  leftHandAnchor: {fileID: 0}
+  rightHandAnchor: {fileID: 0}
+  playerHeight: 1.7
+  headPositionOffset: {x: 0, y: 0, z: 0}
+  headRotationOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &247535762
 GameObject:
   m_ObjectHideFlags: 0
@@ -16764,6 +16786,7 @@ GameObject:
   - component: {fileID: 1704169285}
   - component: {fileID: 1704169284}
   - component: {fileID: 1704169283}
+  - component: {fileID: 1704169286}
   m_Layer: 0
   m_Name: PlayerController
   m_TagString: Untagged
@@ -16840,6 +16863,35 @@ Transform:
   - {fileID: 243075215}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1704169286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704169282}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e8986652627be54daf84dab899f5689, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementSource: 4
+  rotationSource: 5
+  moveButtons: 01000000
+  sprintButtons: 02000000
+  moveSpeed: 1.5
+  sprintMultiplier: 2
+  crouchSpeedMultiplier: 0.5
+  gravity: -9.81
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  groundCheckDistance: 0.1
+  rotationSpeed: 90
+  rotationDeadzone: 0.1
+  smoothRotation: 1
+  crouchThreshold: 1
+  vrRig: {fileID: 243075216}
 --- !u!1 &1715236420
 GameObject:
   m_ObjectHideFlags: 0
@@ -19419,7 +19471,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2002540692}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
