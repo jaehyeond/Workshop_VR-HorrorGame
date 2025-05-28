@@ -1,0 +1,24 @@
+{
+  "include": [
+    "**/*.cs",
+    "**/*.shader",
+    "**/*.cginc",
+    "**/*.compute",
+    "**/*.asmdef",
+    "**/*.json",
+    "**/*.prefab",
+    "**/*.unity"
+  ],
+  "exclude": [
+    "Library/**",
+    "Temp/**",
+    "obj/**",
+    "Logs/**",
+    "Builds/**"
+  ],
+  "rules": {
+    "indent_style": "space",
+    "indent_size": 4,
+    "end_of_line": "lf"
+  }
+} 
