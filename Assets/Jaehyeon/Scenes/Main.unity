@@ -2670,12 +2670,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e84568e1c073c9e498aaeb8195c158fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  headsetTransform: {fileID: 0}
-  leftControllerTransform: {fileID: 0}
-  rightControllerTransform: {fileID: 0}
-  headAnchor: {fileID: 0}
-  leftHandAnchor: {fileID: 0}
-  rightHandAnchor: {fileID: 0}
+  headsetTransform: {fileID: 2146119235}
+  leftControllerTransform: {fileID: 1171749775}
+  rightControllerTransform: {fileID: 1298506141}
+  headAnchor: {fileID: 2146119235}
+  leftHandAnchor: {fileID: 1171749775}
+  rightHandAnchor: {fileID: 1298506141}
   playerHeight: 1.7
   headPositionOffset: {x: 0, y: 0, z: 0}
   headRotationOffset: {x: 0, y: 0, z: 0}
