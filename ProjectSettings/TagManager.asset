@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - SamplesInfoPanel
   layers:
   - Default
   - TransparentFX
@@ -11,9 +12,9 @@ TagManager:
   - HiddenMesh
   - Water
   - UI
-  - 
-  - 
-  - 
+  - Player
+  - Grabbable
+  - Scenario
   - 
   - Character
   - MirroredCharacter
