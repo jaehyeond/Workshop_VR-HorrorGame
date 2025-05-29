@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HighFidelityCharacter
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 13a9e7de67f3edd49bac705b6e3190d5, type: 3}
+      propertyPath: m_Avatar
+      value: 
+      objectReference: {fileID: 9000000, guid: 13a9e7de67f3edd49bac705b6e3190d5, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1499,13 +1503,16 @@ MonoBehaviour:
     ShapeName: bls_mouth.jawDrop25
     ShapeIndex: 6
   _debugDrawSourceSkeleton: 0
+  _debugDrawSourceSkeletonColor: {r: 1, g: 1, b: 1, a: 1}
   _debugDrawTargetSkeleton: 0
-  _retargetingHandler:
+  _debugDrawTargetSkeletonColor: {r: 0, g: 1, b: 0, a: 1}
+  _skeletonRetargeter:
     _retargetingBehavior: 0
     _currentScale: 1
     _applyScale: 1
     _headScaleFactor: 0.95
-    _scaleRange: {x: 0.5, y: 1.5}
+    _scaleRange: {x: 0.8, y: 1.2}
+  _validBodyTrackingDelay: 0.25
   _sourceProcessorContainers: []
   _targetProcessorContainers: []
 --- !u!4 &8149119689849317753 stripped
