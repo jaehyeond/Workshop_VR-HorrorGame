@@ -41,6 +41,12 @@ public class VRLocomotion : MonoBehaviour
     [Header("은신 설정")]
     [SerializeField] private float crouchThreshold = 1.0f;  // 이 높이 이하로 내려가면 숨기 상태로 인식
     [SerializeField] private VRRig vrRig;  // VRRig 참조
+
+    [Header("입력 모드 설정")]
+    [SerializeField] private bool allowHandTrackingMode = true; // 핸드 트래킹 모드 허용 여부
+    [SerializeField] private float controllerCheckInterval = 1.0f; // 컨트롤러 상태 확인 주기 (초)
+    [SerializeField] private GameObject controllerModeUI; // 컨트롤러 모드 UI (선택 사항)
+    [SerializeField] private GameObject handTrackingModeUI; // 핸드 트래킹 모드 UI (선택 사항)
     
     private CharacterController characterController;
     private InputDevice movementController;
@@ -52,6 +58,13 @@ public class VRLocomotion : MonoBehaviour
     private float verticalVelocity = 0f;
     private bool isCrouching = false;
     private float originalHeight;
+    
+    // 모드 전환 관련 변수
+    private bool isInHandTrackingMode = false;
+    private float lastControllerCheckTime = 0f;
+    private bool hasLoggedControllerWarning = false;
+    private bool leftControllerWasConnected = false;
+    private bool rightControllerWasConnected = false;
     
     private void Awake()
     {
@@ -95,13 +108,50 @@ public class VRLocomotion : MonoBehaviour
         
         // 원래 캐릭터 컨트롤러 높이 저장
         originalHeight = characterController.height;
+        
+        // UI 초기 상태 설정
+        if (controllerModeUI != null) controllerModeUI.SetActive(true);
+        if (handTrackingModeUI != null) handTrackingModeUI.SetActive(false);
     }
     
     private void Start()
     {
-        // 이동 컨트롤러 입력 장치 초기화
-        InitializeController(movementSource, out movementController);
-        InitializeController(rotationSource, out rotationController);
+        // 초기 컨트롤러 상태 확인
+        CheckControllerStatus();
+    }
+    
+    private void Update()
+    {
+        // 주기적으로만 컨트롤러 상태 확인 (성능 최적화)
+        if (Time.time > lastControllerCheckTime + controllerCheckInterval)
+        {
+            CheckControllerStatus();
+            lastControllerCheckTime = Time.time;
+        }
+        
+        // 지면 체크 (모든 모드에서 필요)
+        CheckGrounded();
+        
+        // 핸드 트래킹 모드가 아닐 때만 컨트롤러 입력 처리
+        if (!isInHandTrackingMode)
+        {
+            // 움직임 입력 처리
+            HandleMovementInput();
+            
+            // 회전 입력 처리
+            HandleRotationInput();
+        }
+        else
+        {
+            // 핸드 트래킹 모드일 때의 이동 처리 (필요한 경우 구현)
+            HandleHandTrackingMovement();
+        }
+        
+        // 은신(앉기) 상태 체크 (모든 모드에서 필요)
+        CheckCrouchState();
+        
+        // 캐릭터 이동 적용 (모든 모드에서 필요)
+        ApplyMovement();
     }
     
     private void InitializeController(XRNode node, out InputDevice controller)
@@ -114,40 +164,110 @@ public class VRLocomotion : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"{node} 컨트롤러를 찾을 수 없습니다.");
+            // 로그 메시지 억제 (핸드 트래킹 모드로 전환되므로 경고 불필요)
             controller = new InputDevice();
         }
     }
     
-    private void Update()
+    private void CheckControllerStatus()
     {
-        // 컨트롤러 상태 확인 및 재연결
-        if (!movementController.isValid)
+        bool leftControllerConnected = false;
+        bool rightControllerConnected = false;
+        
+        // 왼쪽 컨트롤러 확인
+        var leftDevices = new List<InputDevice>();
+        InputDevices.GetDevicesAtXRNode(XRNode.LeftHand, leftDevices);
+        leftControllerConnected = leftDevices.Count > 0 && leftDevices[0].isValid;
+        
+        // 오른쪽 컨트롤러 확인
+        var rightDevices = new List<InputDevice>();
+        InputDevices.GetDevicesAtXRNode(XRNode.RightHand, rightDevices);
+        rightControllerConnected = rightDevices.Count > 0 && rightDevices[0].isValid;
+        
+        // 모드 전환 결정
+        bool shouldBeInHandTrackingMode = allowHandTrackingMode && 
+                                         (!leftControllerConnected || !rightControllerConnected);
+        
+        // 컨트롤러 연결 상태가 변경되었을 때만 메시지 표시
+        if (leftControllerConnected != leftControllerWasConnected || 
+            rightControllerConnected != rightControllerWasConnected)
         {
-            InitializeController(movementSource, out movementController);
-            if (!movementController.isValid) return;
+            if (!leftControllerConnected)
+                Debug.Log("왼쪽 컨트롤러 연결이 해제되었습니다.");
+            else if (leftControllerConnected && !leftControllerWasConnected)
+                Debug.Log("왼쪽 컨트롤러가 연결되었습니다.");
+                
+            if (!rightControllerConnected)
+                Debug.Log("오른쪽 컨트롤러 연결이 해제되었습니다.");
+            else if (rightControllerConnected && !rightControllerWasConnected)
+                Debug.Log("오른쪽 컨트롤러가 연결되었습니다.");
+                
+            leftControllerWasConnected = leftControllerConnected;
+            rightControllerWasConnected = rightControllerConnected;
         }
         
-        if (!rotationController.isValid)
+        // 모드가 변경되었을 때만 처리
+        if (isInHandTrackingMode != shouldBeInHandTrackingMode)
         {
-            InitializeController(rotationSource, out rotationController);
-            if (!rotationController.isValid) return;
+            isInHandTrackingMode = shouldBeInHandTrackingMode;
+            
+            if (isInHandTrackingMode)
+            {
+                EnterHandTrackingMode();
+            }
+            else
+            {
+                ExitHandTrackingMode();
+                // 컨트롤러 다시 초기화
+                InitializeController(movementSource, out movementController);
+                InitializeController(rotationSource, out rotationController);
+            }
         }
         
-        // 지면 체크
-        CheckGrounded();
+        // 핸드 트래킹 모드가 아닐 때만 컨트롤러 재연결 시도
+        if (!isInHandTrackingMode)
+        {
+            if (!movementController.isValid)
+                InitializeController(movementSource, out movementController);
+                
+            if (!rotationController.isValid)
+                InitializeController(rotationSource, out rotationController);
+        }
+    }
+    
+    private void EnterHandTrackingMode()
+    {
+        // 핸드 트래킹 모드 진입 시 처리
+        Debug.Log("핸드 트래킹 모드로 전환합니다.");
         
-        // 움직임 입력 처리
-        HandleMovementInput();
+        // UI 상태 업데이트
+        if (controllerModeUI != null) controllerModeUI.SetActive(false);
+        if (handTrackingModeUI != null) handTrackingModeUI.SetActive(true);
         
-        // 회전 입력 처리
-        HandleRotationInput();
+        // 이동 방향 초기화
+        moveDirection = Vector3.zero;
+    }
+    
+    private void ExitHandTrackingMode()
+    {
+        // 컨트롤러 모드 복귀 시 처리
+        Debug.Log("컨트롤러 모드로 전환합니다.");
         
-        // 은신(앉기) 상태 체크
-        CheckCrouchState();
+        // UI 상태 업데이트
+        if (controllerModeUI != null) controllerModeUI.SetActive(true);
+        if (handTrackingModeUI != null) handTrackingModeUI.SetActive(false);
+    }
+    
+    private void HandleHandTrackingMovement()
+    {
+        // 핸드 트래킹 모드에서의 이동 처리
+        // 필요한 경우 여기에 구현 (예: 시선 방향 이동, 손 제스처 기반 이동 등)
         
-        // 캐릭터 이동 적용
-        ApplyMovement();
+        // 기본 구현: 이동 없음 (정적 상태)
+        moveDirection = Vector3.zero;
+        
+        // 참고: 실제 핸드 트래킹 기반 이동을 구현하려면 해당 기기의 SDK 사용 필요
+        // (Oculus, SteamVR, Microsoft Mixed Reality 등)
     }
     
     private void CheckGrounded()
@@ -255,6 +375,9 @@ public class VRLocomotion : MonoBehaviour
     // InputHelpers 대신 사용할 버튼 상태 확인 메서드
     private bool IsButtonPressed(InputDevice device, VRButton button)
     {
+        if (!device.isValid)
+            return false;
+            
         switch (button)
         {
             case VRButton.Primary2DAxisClick:
@@ -331,5 +454,36 @@ public class VRLocomotion : MonoBehaviour
     public bool IsHiding()
     {
         return isCrouching;
+    }
+    
+    /// <summary>
+    /// 현재 핸드 트래킹 모드 여부 반환
+    /// </summary>
+    public bool IsInHandTrackingMode()
+    {
+        return isInHandTrackingMode;
+    }
+    
+    /// <summary>
+    /// 핸드 트래킹 모드를 수동으로 설정
+    /// </summary>
+    public void SetHandTrackingMode(bool enable)
+    {
+        if (enable != isInHandTrackingMode)
+        {
+            isInHandTrackingMode = enable;
+            
+            if (isInHandTrackingMode)
+            {
+                EnterHandTrackingMode();
+            }
+            else
+            {
+                ExitHandTrackingMode();
+                // 컨트롤러 다시 초기화
+                InitializeController(movementSource, out movementController);
+                InitializeController(rotationSource, out rotationController);
+            }
+        }
     }
 } 
