@@ -7,6 +7,7 @@ public class CultistAI : MonoBehaviour
     public float detectionRange = 10f;
     public float attackRange = 2f;
     public float idleObservationTime = 2.5f;
+    public float attackCooldown = 2f; // 공격 후 대기 시간
     
     [Header("이동 설정")]
     public float walkSpeed = 1.5f;
@@ -30,9 +31,11 @@ public class CultistAI : MonoBehaviour
     
     private float idleTimer = 0f;
     private float pathUpdateTimer = 0f;
+    private float attackTimer = 0f; // 공격 타이머 추가
     private bool isChasing = false;
     private bool isObserving = false;
     private bool isPraying = false;
+    private bool isAttacking = false; // 공격 상태 플래그 추가
     private Vector3 lastKnownPlayerPosition;
     
     // AI 상태 열거형
@@ -68,7 +71,7 @@ public class CultistAI : MonoBehaviour
         
         // NavMeshAgent 초기 설정
         agent.speed = walkSpeed;
-        agent.stoppingDistance = attackRange * 0.8f;
+        agent.stoppingDistance = 0.1f; // 기도 위치에 정확히 도달하도록 수정
         
         // 애니메이터 초기 상태 설정
         InitializeAnimatorParameters();
@@ -94,7 +97,7 @@ public class CultistAI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Praying Spot이 설정되지 않았습니다!");
+            //Debug.LogWarning("Praying Spot이 설정되지 않았습니다!");
             SetState(AIState.Praying);
         }
     }
@@ -103,7 +106,9 @@ public class CultistAI : MonoBehaviour
     {
         if (animator == null) return;
         
-        // 모든 애니메이터 파라미터를 초기 상태로 설정
+        DebugLog("애니메이터 파라미터 강제 초기화 시작");
+        
+        // 모든 애니메이터 파라미터를 강제로 초기 상태로 설정
         animator.SetBool("PlayerDetected", false);
         animator.SetBool("StartChase", false);
         animator.SetBool("InAttackRange", false);
@@ -111,7 +116,15 @@ public class CultistAI : MonoBehaviour
         animator.SetBool("ReturnToPraying", false);
         animator.SetFloat("IdleTimer", 0f);
         
-        DebugLog("애니메이터 파라미터 초기화 완료");
+        // 강제로 한 번 더 설정 (Unity 에디터에서 수동 설정된 값 덮어쓰기)
+        animator.Update(0f);
+        animator.SetBool("PlayerDetected", false);
+        animator.SetBool("StartChase", false);
+        animator.SetBool("InAttackRange", false);
+        animator.SetBool("LostPlayer", false);
+        animator.SetBool("ReturnToPraying", false);
+        
+        DebugLog("애니메이터 파라미터 강제 초기화 완료");
     }
     
     void SetState(AIState newState)
@@ -128,32 +141,60 @@ public class CultistAI : MonoBehaviour
                 isPraying = true;
                 isObserving = false;
                 isChasing = false;
+                isAttacking = false;
                 agent.isStopped = true;
-                // 기도 애니메이션 트리거는 애니메이터에서 기본 상태로 설정되어야 함
+                agent.velocity = Vector3.zero; // 완전 정지
+                agent.ResetPath(); // 경로 초기화
+                
+                // 기도 상태로 전환할 때 모든 파라미터 리셋
+                animator.SetBool("PlayerDetected", false);
+                animator.SetBool("StartChase", false);
+                animator.SetBool("InAttackRange", false);
+                animator.SetBool("LostPlayer", false);
+                // ReturnToPraying은 이미 설정되어 있을 수 있으므로 유지
                 break;
                 
             case AIState.MovingToPrayingSpot:
                 isPraying = false;
                 isObserving = false;
                 isChasing = false;
+                isAttacking = false;
                 agent.isStopped = false;
-                agent.speed = walkSpeed;
+                agent.speed = runSpeed; // Fast_Run 속도로 이동
+                agent.stoppingDistance = 0.1f; // 정확한 도착을 위해
+                
+                // Fast_Run 상태를 유지하기 위해 StartChase는 건드리지 않음
+                animator.SetBool("InAttackRange", false);
                 break;
                 
             case AIState.Observing:
                 isPraying = false;
                 isObserving = true;
                 isChasing = false;
+                isAttacking = false;
                 agent.isStopped = true;
                 idleTimer = 0f;
+                
+                // 관찰 상태로 전환할 때 기도 관련 파라미터 리셋
+                animator.SetBool("ReturnToPraying", false);
                 break;
                 
             case AIState.Chasing:
                 isPraying = false;
                 isObserving = false;
                 isChasing = true;
+                isAttacking = false;
                 agent.isStopped = false;
                 agent.speed = runSpeed;
+                break;
+                
+            case AIState.Attacking:
+                isPraying = false;
+                isObserving = false;
+                isChasing = false;
+                isAttacking = true;
+                agent.isStopped = true;
+                attackTimer = 0f;
                 break;
         }
     }
@@ -184,13 +225,26 @@ public class CultistAI : MonoBehaviour
             case AIState.Chasing:
                 HandleChasingState(canSeePlayer);
                 break;
+                
+            case AIState.Attacking:
+                HandleAttackingState(canSeePlayer);
+                break;
         }
         
-        // 공격 범위 체크
-        if (player != null)
+        // 공격 범위 체크 및 상태 전환 (공격 상태가 아닐 때만)
+        if (player != null && currentState != AIState.Attacking)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-            animator.SetBool("InAttackRange", distanceToPlayer <= attackRange);
+            bool inAttackRange = distanceToPlayer <= attackRange;
+            
+            animator.SetBool("InAttackRange", inAttackRange);
+            
+            // 추격 중이고 공격 범위에 들어왔다면 공격 상태로 전환
+            if (currentState == AIState.Chasing && inAttackRange && canSeePlayer)
+            {
+                SetState(AIState.Attacking);
+                DebugLog("공격 범위 진입 - 공격 상태로 전환");
+            }
         }
         
         // 경로 디버깅 (개발 중에만 사용)
@@ -202,6 +256,11 @@ public class CultistAI : MonoBehaviour
         // 기도 중 플레이어 발견
         if (canSeePlayer)
         {
+            DebugLog("기도 중 플레이어 재발견!");
+            
+            // 기도 관련 파라미터 리셋
+            animator.SetBool("ReturnToPraying", false);
+            
             SetState(AIState.Observing);
             StartObservingPlayer();
             lastKnownPlayerPosition = player.position;
@@ -219,11 +278,28 @@ public class CultistAI : MonoBehaviour
             return;
         }
         
-        // 기도 위치에 도착했는지 확인
-        if (prayingSpot != null && !agent.pathPending && agent.remainingDistance <= 0.5f)
+        // 기도 위치에 도착했는지 확인 (개선된 조건)
+        if (prayingSpot != null)
         {
-            SetState(AIState.Praying);
-            DebugLog("기도 위치에 도착, 기도 상태로 전환");
+            float distanceToPrayingSpot = Vector3.Distance(transform.position, prayingSpot.position);
+            bool closeEnough = distanceToPrayingSpot <= 1.2f;
+            bool agentStopped = !agent.pathPending && agent.remainingDistance <= 0.8f;
+            bool velocitySlow = agent.velocity.magnitude < 0.2f;
+            
+            // 도착 조건: 거리가 가깝거나, 에이전트가 멈췄거나, 속도가 느림
+            if (closeEnough || (agentStopped && distanceToPrayingSpot <= 2f) || (velocitySlow && distanceToPrayingSpot <= 1.5f))
+            {
+                DebugLog($"기도 위치에 도착 (거리: {distanceToPrayingSpot:F2}m) - 기도 상태로 전환");
+                
+                // 정확한 위치로 이동 후 애니메이터 파라미터 변경
+                transform.position = new Vector3(prayingSpot.position.x, transform.position.y, prayingSpot.position.z);
+                
+                animator.SetBool("StartChase", false);
+                animator.SetBool("LostPlayer", false);
+                animator.SetBool("ReturnToPraying", true);
+                
+                SetState(AIState.Praying);
+            }
         }
     }
     
@@ -245,8 +321,77 @@ public class CultistAI : MonoBehaviour
         {
             lastKnownPlayerPosition = player.position;
         }
+        else
+        {
+            // 플레이어가 보이지 않으면 즉시 추적 중단
+            DebugLog("추격 중 플레이어를 놓침");
+            LoseTarget();
+            return;
+        }
         
         HandleChase();
+    }
+    
+    void HandleAttackingState(bool canSeePlayer)
+    {
+        // 공격 타이머 증가
+        attackTimer += Time.deltaTime;
+        
+        // 플레이어를 향해 회전
+        if (player != null)
+        {
+            RotateTowards(player.position);
+        }
+        
+        // 공격 중에는 0.5초마다만 거리 체크 (애니메이션 끊김 방지)
+        if (attackTimer > 0.5f)
+        {
+            if (player != null)
+            {
+                float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+                
+                // 플레이어가 공격 범위를 많이 벗어났거나 보이지 않는 경우
+                if (distanceToPlayer > attackRange * 1.5f || !canSeePlayer)
+                {
+                    DebugLog("플레이어가 공격 범위를 벗어남 - 추격 재개");
+                    animator.SetBool("InAttackRange", false); // 공격 범위 벗어남 표시
+                    SetState(AIState.Chasing);
+                    return;
+                }
+            }
+        }
+        
+        // 공격 쿨다운이 끝났다면 다음 행동 결정
+        if (attackTimer >= attackCooldown)
+        {
+            DebugLog("공격 쿨다운 종료");
+            
+            // 플레이어가 여전히 보이고 공격 범위에 있다면 계속 공격
+            if (canSeePlayer && player != null)
+            {
+                float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+                if (distanceToPlayer <= attackRange)
+                {
+                    DebugLog("플레이어가 여전히 공격 범위에 있음 - 공격 계속");
+                    attackTimer = 0f; // 타이머 리셋하여 다시 공격
+                    return;
+                }
+                else
+                {
+                    DebugLog("플레이어가 공격 범위를 벗어남 - 추격 재개");
+                    animator.SetBool("InAttackRange", false); // 공격 범위 벗어남 표시
+                    SetState(AIState.Chasing);
+                    return;
+                }
+            }
+            else
+            {
+                DebugLog("플레이어를 잃음 - 기도 위치로 복귀");
+                animator.SetBool("InAttackRange", false); // 공격 범위 벗어남 표시
+                LoseTarget();
+                return;
+            }
+        }
     }
     
     // 플레이어 감지 로직
@@ -254,17 +399,17 @@ public class CultistAI : MonoBehaviour
     {
         if (player == null) 
         {
-            DebugLog("플레이어 참조가 null입니다");
+            //DebugLog("플레이어 참조가 null입니다");
             return false;
         }
         
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        DebugLog($"플레이어와의 거리: {distanceToPlayer:F2}m (감지범위: {detectionRange}m)");
+        //DebugLog($"플레이어와의 거리: {distanceToPlayer:F2}m (감지범위: {detectionRange}m)");
         
         // 감지 범위 밖이면 바로 false
         if(distanceToPlayer > detectionRange)
         {
-            DebugLog("플레이어가 감지 범위 밖에 있습니다");
+            //DebugLog("플레이어가 감지 범위 밖에 있습니다");
             return false;
         }
             
@@ -343,8 +488,11 @@ public class CultistAI : MonoBehaviour
         // 플레이어 방향으로 회전
         RotateTowards(player.position);
         
-        // 애니메이터 파라미터 설정
+        // 모든 이전 상태 파라미터 리셋
         animator.SetBool("StartChase", false);
+        animator.SetBool("ReturnToPraying", false);
+        animator.SetBool("LostPlayer", false);
+        animator.SetBool("InAttackRange", false);
     }
     
     // 플레이어 관찰 처리
@@ -364,8 +512,10 @@ public class CultistAI : MonoBehaviour
             // 추격 상태로 전환
             SetState(AIState.Chasing);
             
-            // 애니메이터 파라미터 설정
+            // 추격을 위한 애니메이터 파라미터 설정
             animator.SetBool("StartChase", true);
+            animator.SetBool("ReturnToPraying", false);
+            animator.SetBool("LostPlayer", false);
             animator.SetFloat("IdleTimer", idleObservationTime);
             
             // 플레이어 위치로 이동 설정
@@ -409,24 +559,37 @@ public class CultistAI : MonoBehaviour
     {
         DebugLog("플레이어를 놓침, 기도 위치로 복귀");
         
-        // 추적 중단
-        animator.SetBool("LostPlayer", true);
-        
         // 기도 위치로 돌아가기
         if(prayingSpot != null)
         {
+            // Fast_Run 상태를 유지하면서 기도 위치로 이동
             SetState(AIState.MovingToPrayingSpot);
-            agent.SetDestination(prayingSpot.position);
             
-            // 충분히 가까워지면 기도 상태로 전환
-            if(Vector3.Distance(transform.position, prayingSpot.position) < 0.5f)
-            {
-                animator.SetBool("ReturnToPraying", true);
-                SetState(AIState.Praying);
-            }
+            // NavMeshAgent 설정 최적화
+            agent.isStopped = false;
+            agent.speed = runSpeed;
+            agent.stoppingDistance = 0.1f;
+            
+            // 목적지 설정 (Y축은 현재 높이 유지)
+            Vector3 targetPosition = new Vector3(prayingSpot.position.x, transform.position.y, prayingSpot.position.z);
+            agent.SetDestination(targetPosition);
+            
+            DebugLog($"기도 위치로 이동 설정 완료 - 목표: {targetPosition}, 현재: {transform.position}");
+            
+            // 애니메이터 파라미터 설정 - Fast_Run을 유지
+            animator.SetBool("PlayerDetected", false);
+            animator.SetBool("InAttackRange", false);
+            // StartChase는 유지하여 Fast_Run 상태 지속
+            // LostPlayer와 ReturnToPraying은 기도 위치 도착 시 설정
         }
         else
         {
+            // 기도 위치가 없으면 바로 기도 상태로
+            animator.SetBool("PlayerDetected", false);
+            animator.SetBool("StartChase", false);
+            animator.SetBool("InAttackRange", false);
+            animator.SetBool("LostPlayer", true);
+            animator.SetBool("ReturnToPraying", true);
             SetState(AIState.Praying);
         }
     }
