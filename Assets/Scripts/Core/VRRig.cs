@@ -4,6 +4,7 @@ using UnityEngine.XR;
 /// <summary>
 /// VR 플레이어의 기본 리그를 관리하는 컴포넌트
 /// 헤드셋, 컨트롤러 등의 XR 장치와 캐릭터 위치를 동기화합니다.
+/// Meta XR SDK의 기본 Hand Interactions와 함께 사용됩니다.
 /// </summary>
 public class VRRig : MonoBehaviour
 {
@@ -24,8 +25,6 @@ public class VRRig : MonoBehaviour
     
     // 내부 참조
     private Camera xrCamera;
-    private VRHandController leftHandController;
-    private VRHandController rightHandController;
     
     private void Start()
     {
@@ -40,22 +39,13 @@ public class VRRig : MonoBehaviour
             xrCamera = headsetTransform.GetComponent<Camera>();
         }
         
-        // 왼손/오른손 컨트롤러 참조 획득
-        if (leftControllerTransform != null)
-        {
-            leftHandController = leftControllerTransform.GetComponent<VRHandController>();
-        }
-        
-        if (rightControllerTransform != null)
-        {
-            rightHandController = rightControllerTransform.GetComponent<VRHandController>();
-        }
-        
         // XR 원점 초기화
         if (XRSettings.isDeviceActive)
         {
             SetInitialPosition();
         }
+        
+        Debug.Log("VR Rig 초기화 완료 - Meta XR Hand Interactions 사용");
     }
     
     private void Update()
@@ -146,24 +136,5 @@ public class VRRig : MonoBehaviour
     public Camera GetXRCamera()
     {
         return xrCamera;
-    }
-    
-    /// <summary>
-    /// 촉각 피드백 제공 (컨트롤러 진동)
-    /// </summary>
-    /// <param name="intensity">진동 강도 (0-1)</param>
-    /// <param name="duration">진동 지속 시간 (초)</param>
-    public void ProvideTactileFeedback(float intensity, float duration)
-    {
-        // 양쪽 컨트롤러에 진동 피드백 전달
-        if (leftHandController != null)
-        {
-            leftHandController.ProvideTactileFeedback(intensity, duration);
-        }
-        
-        if (rightHandController != null)
-        {
-            rightHandController.ProvideTactileFeedback(intensity * 0.7f, duration);
-        }
     }
 } 

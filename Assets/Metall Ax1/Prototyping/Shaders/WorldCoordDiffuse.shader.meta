@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 406a976191e8366459222b654c60e1f8
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 89450
+  packageName: Forged Metal Ax with pattern
+  packageVersion: 1.0
+  assetPath: Assets/Metall Ax1/Prototyping/Shaders/WorldCoordDiffuse.shader
+  uploadId: 188991

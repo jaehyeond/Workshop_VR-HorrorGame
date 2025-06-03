@@ -421,12 +421,8 @@ public class VRLocomotion : MonoBehaviour
                 characterController.height = originalHeight * 0.6f;
                 characterController.center = new Vector3(0, -0.2f, 0);
                 
-                // 필요시 VRRig에 은신 상태 알림
-                if (vrRig != null)
-                {
-                    // 진동 피드백 제공
-                    vrRig.ProvideTactileFeedback(0.3f, 0.2f);
-                }
+                // 은신 상태 진입 시 진동 피드백 (Meta XR 방식)
+                ProvideTactileFeedback(0.3f, 0.2f);
                 
                 Debug.Log("은신 상태 진입");
             }
@@ -436,6 +432,23 @@ public class VRLocomotion : MonoBehaviour
                 characterController.center = Vector3.zero;
                 Debug.Log("은신 상태 종료");
             }
+        }
+    }
+    
+    /// <summary>
+    /// 진동 피드백 제공 (Meta XR 방식)
+    /// </summary>
+    private void ProvideTactileFeedback(float intensity, float duration)
+    {
+        // 양손 컨트롤러에 진동 피드백 전달
+        if (movementController.isValid)
+        {
+            movementController.SendHapticImpulse(0, intensity, duration);
+        }
+        
+        if (rotationController.isValid && rotationController != movementController)
+        {
+            rotationController.SendHapticImpulse(0, intensity * 0.7f, duration);
         }
     }
     
