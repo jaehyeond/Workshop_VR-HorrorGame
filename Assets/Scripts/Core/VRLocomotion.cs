@@ -36,7 +36,7 @@ public class VRLocomotion : MonoBehaviour
     [Header("회전 설정")]
     [SerializeField] private float rotationSpeed = 90f; // 초당 회전 각도
     [SerializeField] private float rotationDeadzone = 0.1f; // 조이스틱 데드존
-    [SerializeField] private bool smoothRotation = true; // 부드러운 회전 여부
+    //[SerializeField] private bool smoothRotation = true; // 부드러운 회전 여부
     
     [Header("은신 설정")]
     [SerializeField] private float crouchThreshold = 1.0f;  // 이 높이 이하로 내려가면 숨기 상태로 인식
@@ -62,7 +62,7 @@ public class VRLocomotion : MonoBehaviour
     // 모드 전환 관련 변수
     private bool isInHandTrackingMode = false;
     private float lastControllerCheckTime = 0f;
-    private bool hasLoggedControllerWarning = false;
+    //private bool hasLoggedControllerWarning = false;
     private bool leftControllerWasConnected = false;
     private bool rightControllerWasConnected = false;
     
