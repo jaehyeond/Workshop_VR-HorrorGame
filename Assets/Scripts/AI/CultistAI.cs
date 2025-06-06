@@ -5,7 +5,7 @@ public class CultistAI : MonoBehaviour
 {
     [Header("AI 설정")]
     public float detectionRange = 10f;
-    public float attackRange = 2f;
+    public float attackRange = 1.5f;
     
     [Header("이동 설정")]
     public float walkSpeed = 1.5f;
@@ -62,9 +62,11 @@ public class CultistAI : MonoBehaviour
             stateMachine = gameObject.AddComponent<CultistStateMachine>();
         }
         
-        // NavMeshAgent 초기 설정
+        // NavMeshAgent 초기 설정 - 더 가까이 접근하도록
         agent.speed = walkSpeed;
-        agent.stoppingDistance = 0.1f;
+        agent.stoppingDistance = 0.5f; // 0.1f에서 0.5f로 변경 (너무 가까이 가지 않도록)
+        agent.radius = 0.3f; // 반지름 명시적 설정
+        agent.height = 1.8f; // 높이 명시적 설정
         
         DebugLog("컴포넌트 초기화 완료");
     }
@@ -161,7 +163,16 @@ public class CultistAI : MonoBehaviour
         // 피격 애니메이션 트리거 추가
         if (animator != null)
         {
+            Debug.Log($"[{name}] Hit 애니메이션 트리거 호출!");
             animator.SetTrigger("Hit");
+            
+            // 애니메이터 상태 확인
+            AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+            Debug.Log($"[{name}] 현재 애니메이터 상태: {currentState.fullPathHash}");
+        }
+        else
+        {
+            Debug.LogError($"[{name}] Animator가 null입니다!");
         }
         
         // 체력이 0 이하면 사망
@@ -230,29 +241,48 @@ public class CultistAI : MonoBehaviour
         // 사망 애니메이션 트리거 추가
         if (animator != null)
         {
+            Debug.Log($"[{name}] Die 애니메이션 트리거 호출!");
             animator.SetBool("IsDead", true);
             animator.SetTrigger("Die");
+            
+            // 애니메이터 상태 확인
+            AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+            Debug.Log($"[{name}] 사망 시 애니메이터 상태: {currentState.fullPathHash}");
+            
+            // Parameters 확인
+            Debug.Log($"[{name}] IsDead 파라미터: {animator.GetBool("IsDead")}");
+        }
+        else
+        {
+            Debug.LogError($"[{name}] Die - Animator가 null입니다!");
         }
         
-        // NavMeshAgent 비활성화
-        if (agent.isOnNavMesh)
+        // NavMeshAgent 완전히 정리 (에러 방지)
+        if (agent != null)
         {
-            agent.isStopped = true;
-        }
-        agent.enabled = false;
-        
-        // CharacterController 비활성화 (땅에 박히는 문제 해결)
-        CharacterController characterController = GetComponent<CharacterController>();
-        if (characterController != null)
-        {
-            characterController.enabled = false;
+            if (agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.ResetPath(); // 경로 초기화
+            }
+            agent.enabled = false;
         }
         
-        // 콜라이더를 Trigger로 변경 (더 이상 타격받지 않음)
-        Collider col = GetComponent<Collider>();
-        if (col != null)
+        // Collider 설정 변경 - 더 이상 타격받지 않도록
+        Collider[] colliders = GetComponents<Collider>();
+        foreach (Collider col in colliders)
         {
-            col.isTrigger = true;
+            if (col != null)
+            {
+                col.isTrigger = true; // 물리 충돌 제거
+            }
+        }
+        
+        // Rigidbody가 있다면 kinematic으로 변경
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
         }
         
         // 매니저에서 제거

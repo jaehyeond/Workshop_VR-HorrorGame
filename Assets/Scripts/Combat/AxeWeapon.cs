@@ -1,10 +1,10 @@
 using UnityEngine;
-using Oculus.Interaction.HandGrab;
+using System.Collections;
 
 public class AxeWeapon : MonoBehaviour
 {
     [Header("타격 설정 - 게임 디자인 문서 기준")]
-    public float baseDamage = 1f; // 기본 1타격 (타격 횟수 기반)
+    public float baseDamage = 50f;
     public float attackCooldown = 1f;
     public LayerMask enemyLayer = -1;
     
@@ -13,9 +13,21 @@ public class AxeWeapon : MonoBehaviour
     public float hitRadius = 0.3f;
     public float minSwingVelocity = 2f; // 최소 휘두르기 속도
     
+    [Header("컨트롤러 설정")]
+    public OVRInput.Button equipButton = OVRInput.Button.PrimaryHandTrigger; // Grip 버튼으로 복원
+    public OVRInput.Button attackButton = OVRInput.Button.PrimaryIndexTrigger; // 공격 버튼
+    public OVRInput.Controller controllerType = OVRInput.Controller.RTouch; // 오른손 컨트롤러
+    
+    [Header("장착 설정")]
+    public Transform handAnchor; // 손 위치 (OVRCameraRig의 RightHandAnchor)
+    public Vector3 equipOffset = new Vector3(0, 0, 0.1f); // 장착 시 오프셋
+    public Vector3 equipRotation = new Vector3(0, 0, 0); // 장착 시 회전
+    
     [Header("효과")]
     public AudioClip hitSound;
     public AudioClip criticalHitSound; // 치명타 사운드
+    public AudioClip equipSound; // 장착 사운드
+    public AudioClip unequipSound; // 해제 사운드
     public ParticleSystem hitEffect;
     public ParticleSystem bloodEffect; // 피 효과
     
@@ -28,86 +40,280 @@ public class AxeWeapon : MonoBehaviour
     private AudioSource audioSource;
     private float lastAttackTime;
     private Vector3 lastPosition;
-    private bool isGrabbed = false;
-    private HandGrabInteractable handGrabInteractable;
+    private bool isEquipped = false;
+    private bool wasEquipButtonPressed = false;
+    private bool wasAttackButtonPressed = false;
+    
+    // 원래 위치 저장 (장착 해제 시 복귀용)
+    private Vector3 originalPosition;
+    private Quaternion originalRotation;
+    private Transform originalParent;
     
     private void Start()
     {
-        axeRigidbody = GetComponent<Rigidbody>();
-        audioSource = GetComponent<AudioSource>();
+        Debug.Log("[AxeWeapon] 스크립트 시작됨!");
         
-        if (axeHead == null)
-            axeHead = transform;
+        // 원래 위치와 회전 저장
+        originalPosition = transform.position;
+        originalRotation = transform.rotation;
+        
+        // Rigidbody 컴포넌트 가져오기
+        axeRigidbody = GetComponent<Rigidbody>();
+        if (axeRigidbody == null)
+        {
+            Debug.LogError("[AxeWeapon] Rigidbody 컴포넌트가 없습니다!");
+        }
+        
+        // Hand Anchor 자동 찾기
+        if (handAnchor == null)
+        {
+            Debug.Log("[AxeWeapon] Hand Anchor 찾는 중...");
             
+            // 방법 1: OVRCameraRig 찾기 (가장 정확한 방법)
+            GameObject cameraRig = GameObject.Find("OVRCameraRig");
+            if (cameraRig != null)
+            {
+                Debug.Log("[AxeWeapon] OVRCameraRig 발견!");
+                Transform rightHand = cameraRig.transform.Find("TrackingSpace/RightHandAnchor");
+                if (rightHand != null)
+                {
+                    handAnchor = rightHand;
+                    Debug.Log("[AxeWeapon] Hand Anchor 자동 설정 완료!");
+                }
+                else
+                {
+                    Debug.LogWarning("[AxeWeapon] TrackingSpace/RightHandAnchor 경로를 찾을 수 없습니다.");
+                    // 다른 경로 시도
+                    rightHand = cameraRig.transform.Find("RightHandAnchor");
+                    if (rightHand != null)
+                    {
+                        handAnchor = rightHand;
+                        Debug.Log("[AxeWeapon] 대체 경로로 Hand Anchor 설정 완료!");
+                    }
+                }
+            }
+            
+            // 방법 2: Building Block 구조 찾기 (현재 씬 구조)
+            if (handAnchor == null)
+            {
+                Debug.Log("[AxeWeapon] Building Block 구조에서 찾는 중...");
+                
+                // PlayerController나 Camera Rig 찾기
+                GameObject playerController = GameObject.Find("PlayerController");
+                if (playerController != null)
+                {
+                    // Building Block 구조에서 RightHandAnchor 찾기
+                    Transform rightHand = playerController.transform.Find("Camera Rig/TrackingSpace/RightHandAnchor");
+                    if (rightHand == null)
+                        rightHand = playerController.transform.Find("TrackingSpace/RightHandAnchor");
+                    if (rightHand == null)
+                        rightHand = playerController.transform.Find("RightHandAnchor");
+                    
+                    if (rightHand != null)
+                    {
+                        handAnchor = rightHand;
+                        Debug.Log($"[AxeWeapon] Building Block에서 Hand Anchor 설정: {rightHand.name}");
+                    }
+                }
+            }
+            
+            // 방법 3: 태그 기반 찾기 (더 안전한 방법)
+            if (handAnchor == null)
+            {
+                Debug.Log("[AxeWeapon] 태그 기반으로 찾는 중...");
+                
+                GameObject[] handObjects = GameObject.FindGameObjectsWithTag("Player");
+                foreach (GameObject obj in handObjects)
+                {
+                    Transform rightHand = obj.transform.Find("RightHandAnchor");
+                    if (rightHand == null)
+                    {
+                        // 재귀적으로 찾기
+                        rightHand = FindChildByName(obj.transform, "RightHandAnchor");
+                    }
+                    
+                    if (rightHand != null)
+                    {
+                        handAnchor = rightHand;
+                        Debug.Log($"[AxeWeapon] 태그 기반으로 Hand Anchor 설정: {rightHand.name}");
+                        break;
+                    }
+                }
+            }
+            
+            // 방법 4: 마지막 수단 - 메인 카메라 사용
+            if (handAnchor == null)
+            {
+                Camera mainCamera = Camera.main;
+                if (mainCamera != null)
+                {
+                    handAnchor = mainCamera.transform;
+                    Debug.LogWarning("[AxeWeapon] Hand Anchor를 찾을 수 없어서 메인 카메라를 임시 사용!");
+                }
+                else
+                {
+                    Debug.LogError("[AxeWeapon] Hand Anchor를 전혀 찾을 수 없습니다!");
+                }
+            }
+        }
+        
         lastPosition = transform.position;
         
-        // HandGrab 이벤트 연결
-        handGrabInteractable = GetComponent<HandGrabInteractable>();
-        if (handGrabInteractable != null)
-        {
-            handGrabInteractable.WhenSelectingInteractorAdded.Action += OnGrabbed;
-            handGrabInteractable.WhenSelectingInteractorRemoved.Action += OnReleased;
-        }
+        Debug.Log("[AxeWeapon] Controller 기반 무기 시스템 초기화 완료");
     }
     
     private void Update()
     {
-        if (isGrabbed)
+        // 매 프레임마다 컨트롤러 상태 확인 (디버그용)
+        if (Time.frameCount % 60 == 0) // 1초마다 한 번씩만 출력
         {
-            CheckForHit();
+            Debug.Log($"[AxeWeapon] 컨트롤러 연결 상태: {OVRInput.IsControllerConnected(controllerType)}");
+        }
+        
+        // 장착/해제 버튼 확인
+        if (OVRInput.GetDown(equipButton, controllerType))
+        {
+            Debug.Log("[AxeWeapon] A버튼 눌림 감지!");
+            ToggleEquip();
+        }
+
+        // 공격 버튼 확인 (장착된 상태에서만)
+        if (isEquipped && OVRInput.GetDown(attackButton, controllerType))
+        {
+            Debug.Log("[AxeWeapon] 공격 버튼 눌림!");
+            Attack();
         }
         
         lastPosition = transform.position;
     }
     
-    private void OnGrabbed(HandGrabInteractor interactor)
+    private void ToggleEquip()
     {
-        isGrabbed = true;
-        Debug.Log("[AxeWeapon] 도끼를 잡았습니다!");
+        if (isEquipped)
+        {
+            UnequipAxe();
+        }
+        else
+        {
+            EquipAxe();
+        }
     }
     
-    private void OnReleased(HandGrabInteractor interactor)
+    private void EquipAxe()
     {
-        isGrabbed = false;
-        Debug.Log("[AxeWeapon] 도끼를 놓았습니다!");
+        if (handAnchor == null)
+        {
+            Debug.LogError("[AxeWeapon] Hand Anchor가 설정되지 않았습니다!");
+            return;
+        }
+
+        Debug.Log("[AxeWeapon] 도끼 장착!");
+        
+        isEquipped = true;
+        
+        // 부모를 Hand Anchor로 설정
+        transform.SetParent(handAnchor);
+        
+        // 올바른 위치와 회전으로 조정 (손잡이를 잡도록)
+        // ※ 실시간 조정 방법: 게임 실행 후 Inspector에서 Transform 값을 조정하세요!
+        // 추천 Position 범위: Y(-0.1~-0.4), Z(0~0.2), X(-0.1~0.1)
+        // 추천 Rotation 범위: X(-60~0), Y(-30~30), Z(-30~30)
+        transform.localPosition = new Vector3(0f, -0.25f, 0.08f); // 일반적으로 자연스러운 값
+        transform.localRotation = Quaternion.Euler(-35f, 10f, 0f); // 약간 비스듬한 각도
+        
+        // 물리 비활성화 (손에 고정)
+        if (axeRigidbody != null)
+        {
+            axeRigidbody.isKinematic = true;
+        }
+        
+        // 햅틱 피드백
+        OVRInput.SetControllerVibration(0.3f, 0.3f, controllerType);
+        StartCoroutine(StopVibration(0.2f));
     }
     
-    private void CheckForHit()
+    private void UnequipAxe()
     {
+        isEquipped = false;
+        
+        // 물리 활성화
+        if (axeRigidbody != null)
+        {
+            axeRigidbody.isKinematic = false;
+        }
+        
+        // 원래 위치로 복귀
+        transform.SetParent(originalParent);
+        transform.position = originalPosition;
+        transform.rotation = originalRotation;
+        
+        // 사운드 재생
+        if (audioSource != null && unequipSound != null)
+        {
+            audioSource.PlayOneShot(unequipSound);
+        }
+        
+        Debug.Log("[AxeWeapon] 도끼 해제!");
+    }
+    
+    private void Attack()
+    {
+        Debug.Log("[AxeWeapon] Attack 메서드 호출됨!");
+        
         // 쿨다운 체크
         if (Time.time - lastAttackTime < attackCooldown)
+        {
+            Debug.Log("[AxeWeapon] 쿨다운 중이라 공격 취소");
             return;
+        }
             
         // 휘두르기 속도 체크
         Vector3 velocity = (transform.position - lastPosition) / Time.deltaTime;
         float swingSpeed = velocity.magnitude;
+        Debug.Log($"[AxeWeapon] 휘두르기 속도: {swingSpeed:F2}");
         
-        if (swingSpeed < minSwingVelocity)
-            return;
-            
+        // 최소 속도 체크 (컨트롤러 기반이므로 더 관대하게)
+        if (swingSpeed < minSwingVelocity * 0.5f)
+        {
+            swingSpeed = minSwingVelocity; // 기본 속도 보장
+            Debug.Log("[AxeWeapon] 속도 부족으로 기본 속도 적용");
+        }
+        
         // 타격 감지
+        Debug.Log($"[AxeWeapon] 타격 감지 시작 - 위치: {axeHead.position}, 반경: {hitRadius}, 레이어: {enemyLayer.value}");
         Collider[] hitColliders = Physics.OverlapSphere(axeHead.position, hitRadius, enemyLayer);
+        Debug.Log($"[AxeWeapon] 감지된 콜라이더 수: {hitColliders.Length}");
         
         foreach (Collider hitCollider in hitColliders)
         {
+            Debug.Log($"[AxeWeapon] 감지된 오브젝트: {hitCollider.name}");
+            
             // 광신도 타격 처리
             CultistAI cultist = hitCollider.GetComponent<CultistAI>();
             if (cultist != null)
             {
+                Debug.Log($"[AxeWeapon] 광신도 발견: {cultist.name}");
                 HitCultist(cultist, swingSpeed);
                 lastAttackTime = Time.time;
                 break; // 한 번에 하나씩만 타격
             }
+            else
+            {
+                Debug.Log($"[AxeWeapon] {hitCollider.name}에는 CultistAI 컴포넌트가 없음");
+            }
         }
+        
+        // 공격 시 항상 햅틱 피드백 (타격 여부와 관계없이)
+        TriggerAttackFeedback();
     }
     
     private void HitCultist(CultistAI cultist, float swingSpeed)
     {
         // 기본 50 데미지 (기존 체력 시스템 사용)
-        float finalDamage = 50f;
+        float finalDamage = baseDamage;
         
         // 치명타 판정 (높은 속도로 휘둘렀을 때)
-        bool isCriticalHit = swingSpeed > minSwingVelocity * 2f;
+        bool isCriticalHit = swingSpeed > minSwingVelocity * 1.5f;
         if (isCriticalHit)
         {
             finalDamage *= 1.5f; // 치명타는 1.5배 데미지
@@ -153,36 +359,49 @@ public class AxeWeapon : MonoBehaviour
         }
     }
     
-    private void TriggerHapticFeedback(bool isCriticalHit)
+    private void TriggerAttackFeedback()
     {
-        // Meta XR 햅틱 피드백 - 최신 API 사용
-        if (handGrabInteractable != null && isGrabbed)
-        {
-            // 치명타 여부에 따른 진동 강도 조절
-            float vibrationStrength = isCriticalHit ? criticalHitVibration : normalHitVibration;
-            
-            // 최신 Meta XR SDK에서는 OVRInput을 직접 사용
-            // 양손 컨트롤러 모두에 진동 적용
-            OVRInput.SetControllerVibration(vibrationStrength, vibrationStrength, OVRInput.Controller.LTouch);
-            OVRInput.SetControllerVibration(vibrationStrength, vibrationStrength, OVRInput.Controller.RTouch);
-            
-            // 진동 지속 시간 후 정지
-            Invoke(nameof(StopVibration), vibrationDuration);
-        }
+        // 공격 시 기본 햅틱 피드백
+        OVRInput.SetControllerVibration(0.4f, 0.4f, controllerType);
+        Invoke(nameof(StopVibration), 0.1f);
     }
     
-    private void StopVibration()
+    private void TriggerHapticFeedback(bool isCriticalHit)
     {
-        OVRInput.SetControllerVibration(0f, 0f, OVRInput.Controller.LTouch);
-        OVRInput.SetControllerVibration(0f, 0f, OVRInput.Controller.RTouch);
+        // 타격 성공 시 강한 햅틱 피드백
+        float vibrationStrength = isCriticalHit ? criticalHitVibration : normalHitVibration;
+        
+        OVRInput.SetControllerVibration(vibrationStrength, vibrationStrength, controllerType);
+        Invoke(nameof(StopVibration), vibrationDuration);
+    }
+    
+    private IEnumerator StopVibration(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        OVRInput.SetControllerVibration(0f, 0f, controllerType);
     }
     
     private void OnDrawGizmosSelected()
     {
         if (axeHead != null)
         {
-            Gizmos.color = Color.red;
+            Gizmos.color = isEquipped ? Color.green : Color.red;
             Gizmos.DrawWireSphere(axeHead.position, hitRadius);
         }
+    }
+    
+    // 재귀적으로 자식 오브젝트에서 이름으로 찾기
+    private Transform FindChildByName(Transform parent, string name)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == name)
+                return child;
+            
+            Transform found = FindChildByName(child, name);
+            if (found != null)
+                return found;
+        }
+        return null;
     }
 } 
