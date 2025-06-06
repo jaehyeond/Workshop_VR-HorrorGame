@@ -28,7 +28,7 @@ public class CultistStateMachine : MonoBehaviour
     private AIState currentState = AIState.Praying;
     private float stateTimer = 0f;
     private float pathUpdateTimer = 0f;
-    private float lastUpdateTime = 0f;
+    //private float lastUpdateTime = 0f;
     private float updatePriority = 1f; // 매니저에서 설정
     
     // 상태 플래그
@@ -348,7 +348,12 @@ public class CultistStateMachine : MonoBehaviour
         animator.SetBool("InAttackRange", false);
         animator.SetBool("LostPlayer", false);
         animator.SetBool("ReturnToPraying", false);
-        animator.SetFloat("IdleTimer", 0f);
+        
+        // 피격/사망 관련 파라미터 초기화 추가
+        animator.SetBool("IsDead", false);
+        // Trigger는 초기화할 필요 없음 (자동으로 false 상태)
+        
+        Debug.Log($"[{name}] 애니메이터 파라미터 초기화 완료");
     }
     
     //우선순위 업데이트 (매니저에서 호출)

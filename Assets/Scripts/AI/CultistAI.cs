@@ -11,6 +11,11 @@ public class CultistAI : MonoBehaviour
     public float walkSpeed = 1.5f;
     public float runSpeed = 4f;
     
+    [Header("체력 설정")]
+    public float maxHealth = 100f;
+    public float currentHealth;
+    public float hitStunDuration = 1f; // 맞았을 때 경직 시간
+    
     [Header("참조")]
     public Transform prayingSpot;
     
@@ -26,6 +31,11 @@ public class CultistAI : MonoBehaviour
     private Transform player;
     private Vector3 lastKnownPlayerPosition;
     
+    // 데미지 관련
+    private bool isStunned = false;
+    private float stunEndTime = 0f;
+    private bool isDead = false;
+    
     // 성능 최적화
     private float lastVisibilityCheck = 0f;
     private float visibilityCheckInterval = 0.2f; // 기본 간격
@@ -36,6 +46,9 @@ public class CultistAI : MonoBehaviour
         InitializeComponents();
         RegisterWithManager();
         SetupInitialState();
+        
+        // 체력 초기화
+        currentHealth = maxHealth;
     }
     
     void InitializeComponents()
@@ -103,6 +116,24 @@ public class CultistAI : MonoBehaviour
     
     void Update()
     {
+        // 죽었거나 스턴 상태면 AI 로직 중단
+        if (isDead) return;
+        
+        // 스턴 상태 체크
+        if (isStunned)
+        {
+            if (Time.time >= stunEndTime)
+            {
+                isStunned = false;
+                animator.SetBool("IsStunned", false);
+                DebugLog("스턴 상태 해제");
+            }
+            else
+            {
+                return; // 스턴 중이면 AI 로직 실행하지 않음
+            }
+        }
+        
         // 성능 최적화: 거리 기반 업데이트 간격 조정
         UpdateVisibilityCheckInterval();
         
@@ -118,6 +149,135 @@ public class CultistAI : MonoBehaviour
         // 공격 범위 체크
         HandleAttackRangeCheck(canSeePlayer);
     }
+    
+    // 데미지 받기
+    public void TakeDamage(float damage, Vector3 attackPosition)
+    {
+        if (isDead) return;
+        
+        currentHealth -= damage;
+        DebugLog($"데미지 {damage:F1} 받음! 현재 체력: {currentHealth:F1}/{maxHealth}");
+        
+        // 피격 애니메이션 트리거 추가
+        if (animator != null)
+        {
+            animator.SetTrigger("Hit");
+        }
+        
+        // 체력이 0 이하면 사망
+        if (currentHealth <= 0)
+        {
+            Die();
+            return;
+        }
+        
+        // 스턴 상태로 전환
+        ApplyStun();
+        
+        // 공격받은 방향으로 약간 밀려남
+        Vector3 knockbackDirection = (transform.position - attackPosition).normalized;
+        knockbackDirection.y = 0; // Y축 제거
+        
+        if (agent.isOnNavMesh)
+        {
+            agent.Move(knockbackDirection * 0.5f);
+        }
+        
+        // 플레이어를 발견한 상태로 전환 (공격받았으니까)
+        if (player != null)
+        {
+            lastKnownPlayerPosition = player.position;
+            stateMachine.StartObserving();
+        }
+    }
+    
+    private void ApplyStun()
+    {
+        isStunned = true;
+        stunEndTime = Time.time + hitStunDuration;
+        
+        // 애니메이터에 스턴 상태 전달
+        animator.SetBool("IsStunned", true);
+        animator.SetTrigger("Hit");
+        
+        // NavMeshAgent 일시 정지
+        if (agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+        }
+        
+        DebugLog($"스턴 상태 적용 ({hitStunDuration}초)");
+        
+        // 스턴 해제 시 NavMeshAgent 재개
+        Invoke(nameof(ResumeMovement), hitStunDuration);
+    }
+    
+    private void ResumeMovement()
+    {
+        if (agent.isOnNavMesh && !isDead)
+        {
+            agent.isStopped = false;
+        }
+    }
+    
+    private void Die()
+    {
+        isDead = true;
+        currentHealth = 0;
+        
+        DebugLog("사망!");
+        
+        // 사망 애니메이션 트리거 추가
+        if (animator != null)
+        {
+            animator.SetBool("IsDead", true);
+            animator.SetTrigger("Die");
+        }
+        
+        // NavMeshAgent 비활성화
+        if (agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+        }
+        agent.enabled = false;
+        
+        // CharacterController 비활성화 (땅에 박히는 문제 해결)
+        CharacterController characterController = GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+        
+        // 콜라이더를 Trigger로 변경 (더 이상 타격받지 않음)
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.isTrigger = true;
+        }
+        
+        // 매니저에서 제거
+        if (CultistManager.Instance != null)
+        {
+            CultistManager.Instance.UnregisterCultist(this);
+        }
+        
+        // 5초 후 오브젝트 제거
+        Destroy(gameObject, 5f);
+    }
+    
+    // 체력 회복 (필요시 사용)
+    public void Heal(float amount)
+    {
+        if (isDead) return;
+        
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        DebugLog($"체력 회복 +{amount:F1}! 현재 체력: {currentHealth:F1}/{maxHealth}");
+    }
+    
+    // 상태 확인 프로퍼티들
+    public bool IsDead => isDead;
+    public bool IsStunned => isStunned;
+    public float HealthPercentage => currentHealth / maxHealth;
     
     void UpdateVisibilityCheckInterval()
     {
@@ -332,6 +492,20 @@ public class CultistAI : MonoBehaviour
         {
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(transform.position, prayingSpot.position);
+        }
+        
+        // 체력 바 표시
+        if (Application.isPlaying && !isDead)
+        {
+            Vector3 healthBarPos = transform.position + Vector3.up * 2.5f;
+            float healthPercentage = currentHealth / maxHealth;
+            
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(healthBarPos - Vector3.right * 0.5f, healthBarPos + Vector3.right * 0.5f);
+            
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(healthBarPos - Vector3.right * 0.5f, 
+                           healthBarPos + Vector3.right * (healthPercentage - 0.5f));
         }
     }
 }
