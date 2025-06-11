@@ -155,29 +155,16 @@ public class CultistAI : MonoBehaviour
     // 데미지 받기
     public void TakeDamage(float damage, Vector3 attackPosition)
     {
-        if (isDead) return;
         
+   
+        // ✅ 체력 감소 - 이게 빠져있었음!
         currentHealth -= damage;
-        DebugLog($"데미지 {damage:F1} 받음! 현재 체력: {currentHealth:F1}/{maxHealth}");
-        
-        // 피격 애니메이션 트리거 추가
-        if (animator != null)
-        {
-            Debug.Log($"[{name}] Hit 애니메이션 트리거 호출!");
-            animator.SetTrigger("Hit");
-            
-            // 애니메이터 상태 확인
-            AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
-            Debug.Log($"[{name}] 현재 애니메이터 상태: {currentState.fullPathHash}");
-        }
-        else
-        {
-            Debug.LogError($"[{name}] Animator가 null입니다!");
-        }
-        
+    
+       
         // 체력이 0 이하면 사망
         if (currentHealth <= 0)
         {
+            Debug.Log($"[{name}] 체력 0 이하! Die() 호출!");
             Die();
             return;
         }
@@ -229,6 +216,11 @@ public class CultistAI : MonoBehaviour
         {
             agent.isStopped = false;
         }
+        
+        // ✅ 스턴 상태 해제 (이게 빠져있었음!)
+        isStunned = false;
+        animator.SetBool("IsStunned", false);
+        Debug.Log($"[{name}] 스턴 해제! 정상 동작 재개");
     }
     
     private void Die()

@@ -6,11 +6,11 @@ public class AxeWeapon : MonoBehaviour
     [Header("타격 설정 - 게임 디자인 문서 기준")]
     public float baseDamage = 50f;
     public float attackCooldown = 1f;
-    public LayerMask enemyLayer = -1;
+    public LayerMask enemyLayer = -1; // 모든 레이어 (디버그용)
     
     [Header("타격 감지")]
     public Transform axeHead; // 도끼날 부분
-    public float hitRadius = 0.3f;
+    public float hitRadius = 2.0f; // 1.0f에서 2.0f로 대폭 확대
     public float minSwingVelocity = 2f; // 최소 휘두르기 속도
     
     [Header("컨트롤러 설정")]
@@ -41,8 +41,8 @@ public class AxeWeapon : MonoBehaviour
     private float lastAttackTime;
     private Vector3 lastPosition;
     private bool isEquipped = false;
-    private bool wasEquipButtonPressed = false;
-    private bool wasAttackButtonPressed = false;
+    // private bool wasEquipButtonPressed = false;
+    // private bool wasAttackButtonPressed = false;
     
     // 원래 위치 저장 (장착 해제 시 복귀용)
     private Vector3 originalPosition;
@@ -51,7 +51,7 @@ public class AxeWeapon : MonoBehaviour
     
     private void Start()
     {
-        Debug.Log("[AxeWeapon] 스크립트 시작됨!");
+        
         
         // 원래 위치와 회전 저장
         originalPosition = transform.position;
@@ -164,11 +164,7 @@ public class AxeWeapon : MonoBehaviour
     
     private void Update()
     {
-        // 매 프레임마다 컨트롤러 상태 확인 (디버그용)
-        if (Time.frameCount % 60 == 0) // 1초마다 한 번씩만 출력
-        {
-            Debug.Log($"[AxeWeapon] 컨트롤러 연결 상태: {OVRInput.IsControllerConnected(controllerType)}");
-        }
+      
         
         // 장착/해제 버튼 확인
         if (OVRInput.GetDown(equipButton, controllerType))
@@ -215,11 +211,9 @@ public class AxeWeapon : MonoBehaviour
         transform.SetParent(handAnchor);
         
         // 올바른 위치와 회전으로 조정 (손잡이를 잡도록)
-        // ※ 실시간 조정 방법: 게임 실행 후 Inspector에서 Transform 값을 조정하세요!
-        // 추천 Position 범위: Y(-0.1~-0.4), Z(0~0.2), X(-0.1~0.1)
-        // 추천 Rotation 범위: X(-60~0), Y(-30~30), Z(-30~30)
-        transform.localPosition = new Vector3(0f, -0.25f, 0.08f); // 일반적으로 자연스러운 값
-        transform.localRotation = Quaternion.Euler(-35f, 10f, 0f); // 약간 비스듬한 각도
+        // 도끼가 손 바깥쪽에 위치하도록 수정
+        transform.localPosition = new Vector3(0.1f, -0.1f, 0.3f); // 손 앞쪽으로 이동
+        transform.localRotation = Quaternion.Euler(-90f, 0f, 0f); // 도끼가 앞을 향하도록
         
         // 물리 비활성화 (손에 고정)
         if (axeRigidbody != null)
@@ -279,10 +273,23 @@ public class AxeWeapon : MonoBehaviour
             Debug.Log("[AxeWeapon] 속도 부족으로 기본 속도 적용");
         }
         
-        // 타격 감지
-        Debug.Log($"[AxeWeapon] 타격 감지 시작 - 위치: {axeHead.position}, 반경: {hitRadius}, 레이어: {enemyLayer.value}");
-        Collider[] hitColliders = Physics.OverlapSphere(axeHead.position, hitRadius, enemyLayer);
+        // 타격 감지 - 위치를 손 중심으로 변경 (더 넓은 범위)
+        Vector3 attackCenter = transform.position; // axeHead.position 대신 손 위치 사용
+        Debug.Log($"[AxeWeapon] === 타격 감지 시작 ===");
+        Debug.Log($"[AxeWeapon] 공격 중심점: {attackCenter}");
+        Debug.Log($"[AxeWeapon] 감지 반경: {hitRadius}");
+        Debug.Log($"[AxeWeapon] Enemy Layer Mask: {enemyLayer.value}");
+        
+        Collider[] hitColliders = Physics.OverlapSphere(attackCenter, hitRadius, enemyLayer);
         Debug.Log($"[AxeWeapon] 감지된 콜라이더 수: {hitColliders.Length}");
+        
+        // 모든 감지된 오브젝트 정보 출력
+        for (int i = 0; i < hitColliders.Length; i++)
+        {
+            GameObject obj = hitColliders[i].gameObject;
+            CultistAI cultist = obj.GetComponent<CultistAI>();
+            Debug.Log($"[AxeWeapon] 감지된 오브젝트 {i}: {obj.name}, 레이어: {obj.layer}, CultistAI: {(cultist != null ? "있음" : "없음")}");
+        }
         
         foreach (Collider hitCollider in hitColliders)
         {
@@ -292,8 +299,10 @@ public class AxeWeapon : MonoBehaviour
             CultistAI cultist = hitCollider.GetComponent<CultistAI>();
             if (cultist != null)
             {
-                Debug.Log($"[AxeWeapon] 광신도 발견: {cultist.name}");
+                Debug.Log($"[AxeWeapon] ===== 광신도 발견: {cultist.name} =====");
+                Debug.Log($"[AxeWeapon] HitCultist 호출 전!");
                 HitCultist(cultist, swingSpeed);
+                Debug.Log($"[AxeWeapon] HitCultist 호출 후!");
                 lastAttackTime = Time.time;
                 break; // 한 번에 하나씩만 타격
             }
@@ -309,6 +318,8 @@ public class AxeWeapon : MonoBehaviour
     
     private void HitCultist(CultistAI cultist, float swingSpeed)
     {
+        Debug.Log($"[AxeWeapon] ##### HitCultist 함수 시작! #####");
+        
         // 기본 50 데미지 (기존 체력 시스템 사용)
         float finalDamage = baseDamage;
         
@@ -319,8 +330,12 @@ public class AxeWeapon : MonoBehaviour
             finalDamage *= 1.5f; // 치명타는 1.5배 데미지
         }
         
+        Debug.Log($"[AxeWeapon] 최종 데미지: {finalDamage}, TakeDamage 호출 전!");
+        
         // 광신도에게 데미지 전달
         cultist.TakeDamage(finalDamage, transform.position);
+        
+        Debug.Log($"[AxeWeapon] TakeDamage 호출 완료!");
         
         // 기본 효과 재생
         PlayHitEffects(isCriticalHit);

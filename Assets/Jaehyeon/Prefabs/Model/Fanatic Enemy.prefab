@@ -2381,6 +2381,9 @@ MonoBehaviour:
   attackRange: 2
   walkSpeed: 1.5
   runSpeed: 4
+  maxHealth: 100
+  currentHealth: 0
+  hitStunDuration: 1
   prayingSpot: {fileID: 0}
   enableDebugLogs: 1
 --- !u!114 &4459756456133090709

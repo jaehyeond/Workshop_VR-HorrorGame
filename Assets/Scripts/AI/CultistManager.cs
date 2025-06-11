@@ -113,10 +113,7 @@ public class CultistManager : MonoBehaviour
             }
         }
         
-        if (processedCount > 0)
-        {
-            DebugLog($"프레임당 레이캐스트 처리: {processedCount}개");
-        }
+      
     }
     
     // 광신도 등록/해제
