@@ -285,7 +285,7 @@ public class AxeWeapon : MonoBehaviour
             audioSource.PlayOneShot(unequipSound);
         }
         
-        Debug.Log("[AxeWeapon] 도끼 해제!");
+        //Debug.Log("[AxeWeapon] 도끼 해제!");
     }
     
     private void Attack()

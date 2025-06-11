@@ -7253,7 +7253,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c95de996d122d3c44bda8896976d95f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cultistPrefab: {fileID: 4214145446479870346, guid: e64968003ffa2084f84a5d35e5d84469, type: 3}
+  cultistPrefab: {fileID: 4363578991983522480, guid: 6924745a509f7b746bc74f3d4548b1aa, type: 3}
   prayingSpots:
   - {fileID: 1761450191552536235}
   - {fileID: 2420389712844799553}
