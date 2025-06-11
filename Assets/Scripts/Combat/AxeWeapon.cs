@@ -274,12 +274,14 @@ public class AxeWeapon : MonoBehaviour
             Debug.Log("[AxeWeapon] 속도 부족으로 기본 속도 적용");
         }
         
-        // 다중 지점 타격 감지 (더 확실한 Hit)
+        // 광범위 타격 감지 (Enemy 전체를 감싸도록)
         Vector3[] attackPoints = {
-            transform.position,                    // 손 위치
-            transform.position + transform.forward * 0.5f,  // 앞쪽
-            transform.position + transform.right * 0.3f,    // 오른쪽
-            transform.position - transform.right * 0.3f     // 왼쪽
+            transform.position,                           // 손 위치
+            transform.position + transform.forward * 1.0f,  // 멀리 앞쪽
+            transform.position + transform.right * 0.8f,    // 오른쪽
+            transform.position - transform.right * 0.8f,    // 왼쪽
+            transform.position + transform.up * 0.5f,       // 위쪽
+            transform.position - transform.up * 0.3f        // 아래쪽
         };
         
         Debug.Log($"[AxeWeapon] === 다중 지점 타격 감지 시작 ===");

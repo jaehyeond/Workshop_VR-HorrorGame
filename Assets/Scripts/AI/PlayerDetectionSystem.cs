@@ -59,8 +59,8 @@ public static class PlayerDetectionSystem
             {
                 if (enableDebug) 
                 {
-                    Debug.Log($"[{cultistName}] 플레이어 감지 성공 (단일 레이캐스트)");
-                    Debug.DrawRay(rayStart, direction * distance, Color.green, 0.1f);
+                    // Debug.Log($"[{cultistName}] 플레이어 감지 성공 (단일 레이캐스트)");
+                    // Debug.DrawRay(rayStart, direction * distance, Color.green, 0.1f);
                 }
                 return true;
             }
@@ -107,8 +107,8 @@ public static class PlayerDetectionSystem
                     {
                         if (enableDebug)
                         {
-                            Debug.Log($"[{cultistName}] 플레이어 감지 성공 (다중 레이캐스트 {i}-{j})");
-                            Debug.DrawRay(rayStart, direction * distance, Color.green, 0.1f);
+                            // Debug.Log($"[{cultistName}] 플레이어 감지 성공 (다중 레이캐스트 {i}-{j})");
+                            // Debug.DrawRay(rayStart, direction * distance, Color.green, 0.1f);
                         }
                         return true;
                     }

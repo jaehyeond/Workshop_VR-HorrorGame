@@ -166,7 +166,7 @@ public class CultistStateMachine : MonoBehaviour
                 pathUpdateTimer = 0f;
                 
                 // 즉시 플레이어 위치로 목적지 설정
-                if (CultistManager.Instance != null)
+                if (CultistManager.Instance != null && agent != null && agent.enabled && agent.isOnNavMesh)
                 {
                     Vector3 playerPos = CultistManager.Instance.GetPlayerPosition();
                     agent.SetDestination(playerPos);
@@ -250,7 +250,7 @@ public class CultistStateMachine : MonoBehaviour
         {
             pathUpdateTimer = 0f;
             
-            if (CultistManager.Instance != null)
+            if (CultistManager.Instance != null && agent != null && agent.enabled && agent.isOnNavMesh)
             {
                 Vector3 playerPos = CultistManager.Instance.GetPlayerPosition();
                 agent.SetDestination(playerPos);
@@ -322,7 +322,10 @@ public class CultistStateMachine : MonoBehaviour
                 transform.position.y, 
                 cultistAI.prayingSpot.position.z
             );
-            agent.SetDestination(targetPosition);
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.SetDestination(targetPosition);
+            }
             
             // 애니메이터 파라미터
             animator.SetBool("PlayerDetected", false);

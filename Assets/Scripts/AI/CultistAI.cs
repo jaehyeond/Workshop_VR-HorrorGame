@@ -176,7 +176,7 @@ public class CultistAI : MonoBehaviour
         Vector3 knockbackDirection = (transform.position - attackPosition).normalized;
         knockbackDirection.y = 0; // Y축 제거
         
-        if (agent.isOnNavMesh)
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
         {
             agent.Move(knockbackDirection * 0.5f);
         }
@@ -225,6 +225,25 @@ public class CultistAI : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool("IsStunned", false);
+            
+            // Hit 애니메이션에서 원래 상태로 복귀
+            if (player != null)
+            {
+                float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+                if (distanceToPlayer <= attackRange)
+                {
+                    // 공격 범위 내라면 공격 재개
+                    animator.SetBool("InAttackRange", true);
+                    stateMachine.SetState(CultistStateMachine.AIState.Attacking);
+                }
+                else
+                {
+                    // 공격 범위 밖이라면 추격 재개
+                    animator.SetBool("PlayerDetected", true);
+                    animator.SetBool("StartChase", true);
+                    stateMachine.SetState(CultistStateMachine.AIState.Chasing);
+                }
+            }
         }
         Debug.Log($"[{name}] 스턴 해제! 정상 동작 재개");
     }
