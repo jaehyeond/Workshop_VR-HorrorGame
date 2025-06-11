@@ -20,9 +20,10 @@ public class AxeWeapon : MonoBehaviour
     public OVRInput.Controller controllerType = OVRInput.Controller.RTouch; // 오른손 컨트롤러
     
     [Header("장착 설정")]
+    public Transform attachPoint; // 실제 손이 잡을 위치 (손잡이 중간)
     public Transform handAnchor; // 손 위치 (OVRCameraRig의 RightHandAnchor)
-    public Vector3 equipOffset = new Vector3(0, 0, 0.1f); // 장착 시 오프셋
-    public Vector3 equipRotation = new Vector3(0, 0, 0); // 장착 시 회전
+    public Vector3 equipOffset = new Vector3(0, 0, 0); // 추가 미세 조정
+    public Vector3 equipRotation = new Vector3(0, 0, 0); // 추가 회전 조정
     
     [Header("효과")]
     public AudioClip hitSound;
@@ -53,6 +54,20 @@ public class AxeWeapon : MonoBehaviour
     private void Start()
     {
         
+        
+        // AttachPoint 자동 찾기
+        if (attachPoint == null)
+        {
+            attachPoint = transform.Find("AttachPoint");
+            if (attachPoint == null)
+            {
+                Debug.LogWarning("[AxeWeapon] AttachPoint가 없습니다. 기본 위치 사용.");
+            }
+            else
+            {
+                Debug.Log("[AxeWeapon] AttachPoint 자동 찾기 성공!");
+            }
+        }
         
         // 원래 위치와 회전 저장
         originalPosition = transform.position;
@@ -208,13 +223,35 @@ public class AxeWeapon : MonoBehaviour
         
         isEquipped = true;
         
-        // 부모를 Hand Anchor로 설정
-        transform.SetParent(handAnchor);
-        
-        // 올바른 위치와 회전으로 조정 (손잡이를 잡도록)
-        // 도끼가 손 바깥쪽에 위치하도록 수정
-        transform.localPosition = new Vector3(0.1f, -0.1f, 0.3f); // 손 앞쪽으로 이동
-        transform.localRotation = Quaternion.Euler(-90f, 0f, 0f); // 도끼가 앞을 향하도록
+                // AttachPoint를 사용한 정확한 장착
+        if (attachPoint != null)
+        {
+            Debug.Log("[AxeWeapon] AttachPoint 사용하여 장착");
+            
+            // 도끼 전체를 손에 붙이되
+            transform.SetParent(handAnchor);
+            
+            // AttachPoint가 손 위치에 오도록 오프셋 계산
+            Vector3 offset = transform.position - attachPoint.position;
+            transform.position = handAnchor.position + offset;
+            
+            // 회전도 AttachPoint 기준으로 조정
+            Quaternion rotOffset = Quaternion.Inverse(attachPoint.localRotation);
+            transform.rotation = handAnchor.rotation * rotOffset;
+            
+            // 추가 미세 조정
+            transform.localPosition += equipOffset;
+            transform.localRotation *= Quaternion.Euler(equipRotation);
+        }
+        else
+        {
+            Debug.LogWarning("[AxeWeapon] AttachPoint가 없어서 기본 방식 사용");
+            
+            // AttachPoint가 없으면 기존 방식
+            transform.SetParent(handAnchor);
+            transform.localPosition = equipOffset;
+            transform.localRotation = Quaternion.Euler(equipRotation);
+        }
         
         // 물리 비활성화 (손에 고정)
         if (axeRigidbody != null)
@@ -442,4 +479,5 @@ public class AxeWeapon : MonoBehaviour
         }
         return null;
     }
+
 } 

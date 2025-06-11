@@ -68,8 +68,8 @@ public static class PlayerDetectionSystem
             // 장애물에 막혔다면 다중 레이캐스트 시도
             if (enableDebug)
             {
-                Debug.Log($"[{cultistName}] 시야선이 {hit.transform.name}에 의해 차단됨 - 다중 레이캐스트 시도");
-                Debug.DrawRay(rayStart, direction * hit.distance, Color.red, 0.1f);
+                // Debug.Log($"[{cultistName}] 시야선이 {hit.transform.name}에 의해 차단됨 - 다중 레이캐스트 시도");
+                // Debug.DrawRay(rayStart, direction * hit.distance, Color.red, 0.1f);
             }
             
             return PerformMultipleRaycasts(cultistPos, playerPos, playerTransform, enableDebug, cultistName);
