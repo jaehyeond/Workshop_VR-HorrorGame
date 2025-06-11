@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class AxeWeapon : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class AxeWeapon : MonoBehaviour
     
     [Header("타격 감지")]
     public Transform axeHead; // 도끼날 부분
-    public float hitRadius = 2.0f; // 1.0f에서 2.0f로 대폭 확대
+    public float hitRadius = 3.0f; // 2.0f에서 3.0f로 더욱 확대
     public float minSwingVelocity = 2f; // 최소 휘두르기 속도
     
     [Header("컨트롤러 설정")]
@@ -273,14 +274,34 @@ public class AxeWeapon : MonoBehaviour
             Debug.Log("[AxeWeapon] 속도 부족으로 기본 속도 적용");
         }
         
-        // 타격 감지 - 위치를 손 중심으로 변경 (더 넓은 범위)
-        Vector3 attackCenter = transform.position; // axeHead.position 대신 손 위치 사용
-        Debug.Log($"[AxeWeapon] === 타격 감지 시작 ===");
-        Debug.Log($"[AxeWeapon] 공격 중심점: {attackCenter}");
+        // 다중 지점 타격 감지 (더 확실한 Hit)
+        Vector3[] attackPoints = {
+            transform.position,                    // 손 위치
+            transform.position + transform.forward * 0.5f,  // 앞쪽
+            transform.position + transform.right * 0.3f,    // 오른쪽
+            transform.position - transform.right * 0.3f     // 왼쪽
+        };
+        
+        Debug.Log($"[AxeWeapon] === 다중 지점 타격 감지 시작 ===");
         Debug.Log($"[AxeWeapon] 감지 반경: {hitRadius}");
         Debug.Log($"[AxeWeapon] Enemy Layer Mask: {enemyLayer.value}");
         
-        Collider[] hitColliders = Physics.OverlapSphere(attackCenter, hitRadius, enemyLayer);
+        List<Collider> allHitColliders = new List<Collider>();
+        
+        // 각 지점에서 타격 감지
+        foreach (Vector3 point in attackPoints)
+        {
+            Collider[] pointHits = Physics.OverlapSphere(point, hitRadius, enemyLayer);
+            foreach (Collider hit in pointHits)
+            {
+                if (!allHitColliders.Contains(hit))
+                {
+                    allHitColliders.Add(hit);
+                }
+            }
+        }
+        
+        Collider[] hitColliders = allHitColliders.ToArray();
         Debug.Log($"[AxeWeapon] 감지된 콜라이더 수: {hitColliders.Length}");
         
         // 모든 감지된 오브젝트 정보 출력

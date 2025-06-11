@@ -195,11 +195,14 @@ public class CultistAI : MonoBehaviour
         stunEndTime = Time.time + hitStunDuration;
         
         // 애니메이터에 스턴 상태 전달
-        animator.SetBool("IsStunned", true);
-        animator.SetTrigger("Hit");
+        if (animator != null)
+        {
+            animator.SetBool("IsStunned", true);
+            animator.SetTrigger("Hit");
+        }
         
         // NavMeshAgent 일시 정지
-        if (agent.isOnNavMesh)
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
         {
             agent.isStopped = true;
         }
@@ -212,14 +215,17 @@ public class CultistAI : MonoBehaviour
     
     private void ResumeMovement()
     {
-        if (agent.isOnNavMesh && !isDead)
+        if (agent != null && agent.enabled && agent.isOnNavMesh && !isDead)
         {
             agent.isStopped = false;
         }
         
         // ✅ 스턴 상태 해제 (이게 빠져있었음!)
         isStunned = false;
-        animator.SetBool("IsStunned", false);
+        if (animator != null)
+        {
+            animator.SetBool("IsStunned", false);
+        }
         Debug.Log($"[{name}] 스턴 해제! 정상 동작 재개");
     }
     
