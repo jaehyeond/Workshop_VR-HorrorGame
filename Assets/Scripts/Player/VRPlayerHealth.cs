@@ -44,8 +44,11 @@ public class VRPlayerHealth : MonoBehaviour
     
     void Update()
     {
-        // 체력 회복 시스템 (5초 후 자동 회복)
-        if (currentHealth < maxHealth && Time.time - lastDamageTime > recoveryDelay)
+        // Game Over 상태에서는 자동 회복 비활성화
+        bool isGameOver = GameOverManager.Instance != null && GameOverManager.Instance.IsGameOver();
+        
+        // 체력 회복 시스템 (5초 후 자동 회복, Game Over 아닐 때만)
+        if (!isGameOver && currentHealth < maxHealth && currentHealth > 0 && Time.time - lastDamageTime > recoveryDelay)
         {
             float healAmount = maxHealth * recoveryRate * Time.deltaTime;
             currentHealth = Mathf.Min(currentHealth + healAmount, maxHealth);
