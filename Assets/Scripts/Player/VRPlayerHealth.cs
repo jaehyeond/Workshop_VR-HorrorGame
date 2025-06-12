@@ -24,6 +24,9 @@ public class VRPlayerHealth : MonoBehaviour
     private VRPostProcessingManager postProcessingManager;
     private OVRCameraRig cameraRig;
     
+    // 체력 회복 시스템
+    private float lastDamageTime = 0f;
+    
     // 이벤트
     public System.Action<float> OnHealthChanged;
     public System.Action OnPlayerDeath;
@@ -33,6 +36,20 @@ public class VRPlayerHealth : MonoBehaviour
     {
         InitializeHealth();
         FindReferences();
+    }
+    
+    void Update()
+    {
+        // 체력 회복 시스템 (5초 후 자동 회복)
+        if (currentHealth < maxHealth && Time.time - lastDamageTime > 5f)
+        {
+            float healAmount = maxHealth * 0.1f * Time.deltaTime; // 초당 10% 회복
+            currentHealth = Mathf.Min(currentHealth + healAmount, maxHealth);
+            
+            // 체력 회복에 따른 효과 업데이트
+            float healthPercentage = currentHealth / maxHealth;
+            ApplyHealthBasedEffect(healthPercentage);
+        }
     }
     
     void InitializeHealth()
@@ -79,6 +96,7 @@ public class VRPlayerHealth : MonoBehaviour
         
         // 데미지 적용
         currentHealth = Mathf.Max(0, currentHealth - damage);
+        lastDamageTime = Time.time; // 마지막 피격 시간 기록
         
         Debug.Log($"[VRPlayerHealth] ✅ 플레이어가 {damage} 데미지를 받았습니다! 현재 체력: {currentHealth}/{maxHealth}");
         
@@ -86,9 +104,9 @@ public class VRPlayerHealth : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
         OnPlayerDamaged?.Invoke();
         
-        // VR 피격 효과 (빨간 화면)
-        Debug.Log("[VRPlayerHealth] 🔴 VR 피격 효과 시작!");
-        StartCoroutine(DamageScreenEffect());
+        // VR 피격 효과 (즉시 적용)
+        Debug.Log("[VRPlayerHealth] 🔴 VR 피격 효과 즉시 적용!");
+        ApplyImmediateDamageEffect();
         
         // 햅틱 피드백
         Debug.Log("[VRPlayerHealth] 📳 햅틱 피드백 시작!");
@@ -110,12 +128,10 @@ public class VRPlayerHealth : MonoBehaviour
     }
     
     /// <summary>
-    /// VR 피격 시 빨간 화면 효과 (Meta Quest용)
+    /// 즉시 VR 피격 효과 적용 (딜레이 없음)
     /// </summary>
-    private IEnumerator DamageScreenEffect()
+    private void ApplyImmediateDamageEffect()
     {
-        Debug.Log("[VRPlayerHealth] 🔴 DamageScreenEffect 시작!");
-        
         if (postProcessingManager == null) 
         {
             Debug.LogError("[VRPlayerHealth] ❌ VRPostProcessingManager를 찾을 수 없음!");
@@ -125,7 +141,7 @@ public class VRPlayerHealth : MonoBehaviour
             if (postProcessingManager == null)
             {
                 Debug.LogError("[VRPlayerHealth] ❌ VRPostProcessingManager를 다시 찾아도 없음!");
-                yield break;
+                return;
             }
             else
             {
@@ -133,15 +149,59 @@ public class VRPlayerHealth : MonoBehaviour
             }
         }
         
-        Debug.Log($"[VRPlayerHealth] VRPostProcessingManager 호출: intensity={damageScreenIntensity}, duration={damageEffectDuration}");
+        // 체력 비율 계산
+        float healthPercentage = currentHealth / maxHealth;
         
-        // 새로운 VR 전용 피격 효과 사용 (더 강력한 빨간 화면)
-        postProcessingManager.TriggerVRDamageEffect(damageScreenIntensity, damageEffectDuration);
+        // 체력별 단계적 효과 적용
+        ApplyHealthBasedEffect(healthPercentage);
         
-        // 효과 지속시간 대기
-        yield return new WaitForSeconds(damageEffectDuration);
+        // 피격 순간 강한 효과 (0.3초 후 체력별 효과로 복구)
+        postProcessingManager.TriggerInstantDamageFlash();
         
-        Debug.Log("[VRPlayerHealth] VR 피격 효과 종료");
+        // 0.3초 후 체력별 상태로 복구
+        StartCoroutine(RestoreToHealthBasedEffect(healthPercentage));
+    }
+    
+    /// <summary>
+    /// 체력별 단계적 효과 적용
+    /// </summary>
+    private void ApplyHealthBasedEffect(float healthPercentage)
+    {
+        Debug.Log($"[VRPlayerHealth] 체력별 효과 적용: {healthPercentage:P1} ({currentHealth}/{maxHealth})");
+        
+        if (healthPercentage > 0.75f)
+        {
+            // 75-100%: 연한 외각 빨강
+            Debug.Log("[VRPlayerHealth] 체력 상태: 양호 (연한 외각 빨강)");
+            postProcessingManager.SetHealthBasedEffect(VRPostProcessingManager.HealthState.Good);
+        }
+        else if (healthPercentage > 0.50f)
+        {
+            // 50-75%: 중간 범위 빨강
+            Debug.Log("[VRPlayerHealth] 체력 상태: 주의 (중간 범위 빨강)");
+            postProcessingManager.SetHealthBasedEffect(VRPostProcessingManager.HealthState.Caution);
+        }
+        else if (healthPercentage > 0.25f)
+        {
+            // 25-50%: 넓은 범위 진한 빨강
+            Debug.Log("[VRPlayerHealth] 체력 상태: 위험 (넓은 범위 진한 빨강)");
+            postProcessingManager.SetHealthBasedEffect(VRPostProcessingManager.HealthState.Danger);
+        }
+        else
+        {
+            // 0-25%: 완전 빨강
+            Debug.Log("[VRPlayerHealth] 체력 상태: 치명적 (완전 빨강)");
+            postProcessingManager.SetHealthBasedEffect(VRPostProcessingManager.HealthState.Critical);
+        }
+    }
+    
+    /// <summary>
+    /// 피격 플래시 후 체력별 효과로 복구
+    /// </summary>
+    private IEnumerator RestoreToHealthBasedEffect(float healthPercentage)
+    {
+        yield return new WaitForSeconds(0.3f);
+        ApplyHealthBasedEffect(healthPercentage);
     }
     
     /// <summary>

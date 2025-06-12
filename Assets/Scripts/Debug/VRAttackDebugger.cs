@@ -188,21 +188,21 @@ public class VRAttackDebugger : MonoBehaviour
     }
     
     /// <summary>
-    /// 강제 데미지 테스트 (강화된 디버그)
+    /// 즉시 데미지 테스트 (최적화된 버전)
     /// </summary>
     public void TestDamageEffect()
     {
-        Debug.Log("=== VR 피격 효과 테스트 시작 ===");
+        Debug.Log("=== VR 피격 효과 즉시 테스트 시작 ===");
         
         if (vrPlayerHealth != null)
         {
             Debug.Log($"[VRAttackDebugger] ✅ VRPlayerHealth 발견: {vrPlayerHealth.name}");
-            Debug.Log($"[VRAttackDebugger] 🔴 강제 피격 테스트 실행! (데미지: {testDamageAmount})");
+            Debug.Log($"[VRAttackDebugger] ⚡ 즉시 피격 테스트 실행! (데미지: {testDamageAmount})");
             
             // 현재 체력 상태 로그
             Debug.Log($"[VRAttackDebugger] 피격 전 체력: {vrPlayerHealth.currentHealth}/{vrPlayerHealth.maxHealth}");
             
-            // 데미지 적용
+            // 즉시 데미지 적용
             vrPlayerHealth.TakeDamage(testDamageAmount);
             lastDamageTime = Time.time;
             damageCount++;
@@ -220,20 +220,34 @@ public class VRAttackDebugger : MonoBehaviour
             {
                 Debug.LogWarning("[VRAttackDebugger] ❌ VRPostProcessingManager를 찾을 수 없음!");
             }
+            
+            Debug.Log("[VRAttackDebugger] ✅ 즉시 피격 효과 적용 완료!");
         }
         else
         {
             Debug.LogError("[VRAttackDebugger] ❌ VRPlayerHealth를 찾을 수 없어서 테스트 불가!");
             
-            // 대안으로 직접 Post Processing 효과 테스트
-            if (postProcessingManager != null)
+            // 다시 찾기 시도
+            vrPlayerHealth = FindFirstObjectByType<VRPlayerHealth>();
+            if (vrPlayerHealth != null)
             {
-                Debug.Log("[VRAttackDebugger] 🔄 대안: 직접 VR 피격 효과 호출");
-                postProcessingManager.TriggerVRDamageEffect(0.8f, 1.5f);
+                Debug.Log("[VRAttackDebugger] ✅ VRPlayerHealth를 다시 찾았음! 즉시 테스트 실행!");
+                vrPlayerHealth.TakeDamage(testDamageAmount);
+                lastDamageTime = Time.time;
+                damageCount++;
+            }
+            else
+            {
+                // 대안으로 직접 Post Processing 효과 테스트
+                if (postProcessingManager != null)
+                {
+                    Debug.Log("[VRAttackDebugger] 🔄 대안: 직접 VR 피격 효과 호출");
+                    postProcessingManager.TriggerInstantDamageFlash();
+                }
             }
         }
         
-        Debug.Log("=== VR 피격 효과 테스트 완료 ===");
+        Debug.Log("=== VR 피격 효과 즉시 테스트 완료 ===");
     }
     
     /// <summary>

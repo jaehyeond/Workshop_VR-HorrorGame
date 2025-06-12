@@ -4,6 +4,19 @@ using UnityEngine.Rendering.Universal;
 using System.Collections;
 
 /// <summary>
+/// 체력별 효과 설정 구조체
+/// </summary>
+[System.Serializable]
+public struct HealthEffectSettings
+{
+    public float vignetteIntensity;
+    public Color vignetteColor;
+    public float saturation;
+    public float hueShift;
+    public float contrast;
+}
+
+/// <summary>
 /// VR 호러 게임을 위한 Post Processing 기반 화면 효과 매니저
 /// Universal RP의 Volume 시스템을 사용한 고품질 VR 피격 효과
 /// </summary>
@@ -11,12 +24,6 @@ public class VRPostProcessingManager : MonoBehaviour
 {
     [Header("VR Post Processing 설정")]
     [SerializeField] private bool enableEffects = true;
-    [SerializeField] private float effectTransitionSpeed = 3.0f;
-    
-    [Header("피격 효과 설정")]
-    [SerializeField] private float damageVignetteIntensity = 0.95f;
-    [SerializeField] private float damageDuration = 1.5f;
-    [SerializeField] private Color damageColor = Color.red;
     
     // Post Processing 컴포넌트들
     private Volume globalVolume;
@@ -44,10 +51,23 @@ public class VRPostProcessingManager : MonoBehaviour
         Custom
     }
     
+    public enum HealthState
+    {
+        Perfect,    // 100%: 정상
+        Good,       // 75-100%: 연한 외각 빨강
+        Caution,    // 50-75%: 중간 범위 빨강
+        Danger,     // 25-50%: 넓은 범위 진한 빨강
+        Critical    // 0-25%: 완전 빨강
+    }
+    
     /// <summary>
     /// Game Over 효과 완료 이벤트
     /// </summary>
     public System.Action OnGameOverEffectComplete;
+    
+    // 체력별 효과 설정
+    [Header("체력별 단계 효과")]
+    [SerializeField] private HealthEffectSettings[] healthEffectSettings;
     
     private void Awake()
     {
@@ -57,7 +77,68 @@ public class VRPostProcessingManager : MonoBehaviour
     private void Start()
     {
         ResetToNormalState();
+        InitializeHealthEffectSettings();
         Debug.Log("[VRPostProcessingManager] ✅ Post Processing 기반 VR 효과 시스템 초기화 완료");
+    }
+    
+    /// <summary>
+    /// 체력별 효과 설정 초기화
+    /// </summary>
+    private void InitializeHealthEffectSettings()
+    {
+        healthEffectSettings = new HealthEffectSettings[5];
+        
+        // Perfect (100%): 정상
+        healthEffectSettings[0] = new HealthEffectSettings
+        {
+            vignetteIntensity = 0f,
+            vignetteColor = Color.black,
+            saturation = 0f,
+            hueShift = 0f,
+            contrast = 0f
+        };
+        
+        // Good (75-100%): 연한 외각 빨강
+        healthEffectSettings[1] = new HealthEffectSettings
+        {
+            vignetteIntensity = 0.25f,
+            vignetteColor = new Color(1f, 0.8f, 0.8f, 1f),
+            saturation = 10f,
+            hueShift = -5f,
+            contrast = 5f
+        };
+        
+        // Caution (50-75%): 중간 범위 빨강
+        healthEffectSettings[2] = new HealthEffectSettings
+        {
+            vignetteIntensity = 0.45f,
+            vignetteColor = new Color(1f, 0.6f, 0.6f, 1f),
+            saturation = 25f,
+            hueShift = -10f,
+            contrast = 15f
+        };
+        
+        // Danger (25-50%): 넓은 범위 진한 빨강
+        healthEffectSettings[3] = new HealthEffectSettings
+        {
+            vignetteIntensity = 0.7f,
+            vignetteColor = new Color(1f, 0.4f, 0.4f, 1f),
+            saturation = 50f,
+            hueShift = -15f,
+            contrast = 30f
+        };
+        
+        // Critical (0-25%): 완전 빨강
+        healthEffectSettings[4] = new HealthEffectSettings
+        {
+            vignetteIntensity = 0.95f,
+            vignetteColor = new Color(1f, 0.2f, 0.2f, 1f),
+            saturation = 80f,
+            hueShift = -20f,
+            contrast = 50f
+        };
+        
+        Debug.Log("[VRPostProcessingManager] 체력별 효과 설정 초기화 완료");
     }
     
     /// <summary>
@@ -167,23 +248,56 @@ public class VRPostProcessingManager : MonoBehaviour
     }
     
     /// <summary>
-    /// VR 플레이어 피격 시 강력한 빨간 화면 효과 (즉시 적용)
+    /// 즉시 피격 플래시 효과 (0.3초 강한 빨강)
     /// </summary>
-    public void TriggerVRDamageEffect(float intensity = 0.8f, float duration = 1.5f)
+    public void TriggerInstantDamageFlash()
     {
-        Debug.Log($"[VRPostProcessingManager] 🔴 VR 피격 효과! 강도: {intensity}, 지속시간: {duration}초");
-        
-        // 즉시 효과 적용 (코루틴 없이)
-        ApplyDamageEffectImmediate();
-        
-        // 복구는 코루틴으로
-        StartCoroutine(RestoreEffectAfterDelay(duration));
+        Debug.Log("[VRPostProcessingManager] ⚡ 즉시 피격 플래시 효과!");
+        StartCoroutine(InstantDamageFlashCoroutine());
     }
     
     /// <summary>
-    /// 즉시 피격 효과 적용 (코루틴 없음)
+    /// 즉시 피격 플래시 코루틴
     /// </summary>
-    private void ApplyDamageEffectImmediate()
+    private IEnumerator InstantDamageFlashCoroutine()
+    {
+        // 강한 빨간 플래시 효과
+        ApplyInstantFlashEffect();
+        
+        // 0.3초 대기
+        yield return new WaitForSeconds(0.3f);
+        
+        Debug.Log("[VRPostProcessingManager] 피격 플래시 효과 완료");
+    }
+    
+    /// <summary>
+    /// 체력별 단계 효과 설정
+    /// </summary>
+    public void SetHealthBasedEffect(HealthState healthState)
+    {
+        Debug.Log($"[VRPostProcessingManager] 체력별 효과 적용: {healthState}");
+        
+        if (globalVolume == null || globalVolume.profile == null)
+        {
+            Debug.LogError("[VRPostProcessingManager] ❌ GlobalVolume 또는 Profile이 null!");
+            return;
+        }
+        
+        int index = (int)healthState;
+        if (index >= 0 && index < healthEffectSettings.Length)
+        {
+            ApplyHealthEffect(healthEffectSettings[index]);
+        }
+        else
+        {
+            Debug.LogError($"[VRPostProcessingManager] ❌ 잘못된 HealthState 인덱스: {index}");
+        }
+    }
+    
+    /// <summary>
+    /// 즉시 플래시 효과 적용 (극강 빨강)
+    /// </summary>
+    private void ApplyInstantFlashEffect()
     {
         if (vignette == null || colorAdjustments == null)
         {
@@ -192,7 +306,7 @@ public class VRPostProcessingManager : MonoBehaviour
         }
         
         isEffectActive = true;
-        Debug.Log("[VRPostProcessingManager] 🔴 즉시 빨간 효과 적용!");
+        Debug.Log("[VRPostProcessingManager] ⚡ 즉시 플래시 효과 적용!");
         
         // 모든 Global Volume 찾아서 우선순위 높이기
         var allVolumes = FindObjectsByType<UnityEngine.Rendering.Volume>(FindObjectsSortMode.None);
@@ -205,20 +319,58 @@ public class VRPostProcessingManager : MonoBehaviour
         }
         globalVolume.priority = 100; // 우리 Volume 최고 우선순위
         
-        // 극강 빨간 효과
+        // 극강 빨간 플래시 효과
         vignette.intensity.value = 1.0f; // 최대 비네팅
         vignette.color.value = Color.red; // 순수 빨간색
         
         // 색상 조정으로 빨간 필터 효과 (극강)
-        colorAdjustments.saturation.value = 100f; // 최대 채도
+        colorAdjustments.saturation.value = 120f; // 최대 채도
         colorAdjustments.hueShift.value = 0f; // 색조 이동 없음
-        colorAdjustments.contrast.value = 50f; // 최대 대비
-        colorAdjustments.colorFilter.value = new Color(1f, 0.2f, 0.2f, 1f); // 강한 빨간 필터
+        colorAdjustments.contrast.value = 60f; // 최대 대비
+        colorAdjustments.colorFilter.value = new Color(1f, 0.1f, 0.1f, 1f); // 극강 빨간 필터
         
         // 블룸으로 강렬한 효과
-        bloom.intensity.value = 2.0f; // 최대 블룸
+        bloom.intensity.value = 3.0f; // 최대 블룸
         
-        Debug.Log("[VRPostProcessingManager] ✅ 즉시 빨간 효과 적용 완료!");
+        Debug.Log("[VRPostProcessingManager] ✅ 즉시 플래시 효과 적용 완료!");
+    }
+    
+    /// <summary>
+    /// 체력별 효과 적용
+    /// </summary>
+    private void ApplyHealthEffect(HealthEffectSettings settings)
+    {
+        if (vignette == null || colorAdjustments == null)
+        {
+            Debug.LogWarning("[VRPostProcessingManager] Post Processing 컴포넌트가 없습니다!");
+            return;
+        }
+        
+        Debug.Log($"[VRPostProcessingManager] 체력별 효과 적용: 비네팅={settings.vignetteIntensity}, 채도={settings.saturation}");
+        
+        // 비네팅 효과
+        vignette.intensity.value = settings.vignetteIntensity;
+        vignette.color.value = settings.vignetteColor;
+        
+        // 색상 조정
+        colorAdjustments.saturation.value = settings.saturation;
+        colorAdjustments.hueShift.value = settings.hueShift;
+        colorAdjustments.contrast.value = settings.contrast;
+        
+        // 체력별 색상 필터
+        if (settings.vignetteIntensity > 0f)
+        {
+            colorAdjustments.colorFilter.value = new Color(1f, 1f - settings.vignetteIntensity * 0.8f, 1f - settings.vignetteIntensity * 0.8f, 1f);
+        }
+        else
+        {
+            colorAdjustments.colorFilter.value = Color.white;
+        }
+        
+        // 블룸 효과
+        bloom.intensity.value = settings.vignetteIntensity * 0.5f;
+        
+        isEffectActive = settings.vignetteIntensity > 0f;
     }
     
     /// <summary>

@@ -121,7 +121,7 @@ public class VRPostProcessingSetup : EditorWindow
         EditorGUILayout.LabelField("렌더 파이프라인:", urpStatus);
         
         // 글로벌 볼륨 확인
-        Volume globalVolume = FindObjectOfType<Volume>();
+        Volume globalVolume = FindFirstObjectByType<Volume>();
         bool hasGlobalVolume = globalVolume != null && globalVolume.isGlobal;
         
         string volumeStatus = hasGlobalVolume ? "✅ Global Volume 존재함" : "❌ Global Volume 없음";
@@ -168,7 +168,7 @@ public class VRPostProcessingSetup : EditorWindow
     private void SetupGlobalVolume()
     {
         // 기존 Global Volume 찾기
-        Volume existingVolume = FindObjectOfType<Volume>();
+                    Volume existingVolume = FindFirstObjectByType<Volume>();
         
         if (existingVolume != null && existingVolume.isGlobal)
         {
@@ -323,7 +323,7 @@ public class VRPostProcessingSetup : EditorWindow
     
     private void ApplyHorrorProfile()
     {
-        Volume globalVolume = FindObjectOfType<Volume>();
+        Volume globalVolume = FindFirstObjectByType<Volume>();
         if (globalVolume == null)
         {
             EditorUtility.DisplayDialog("오류", 

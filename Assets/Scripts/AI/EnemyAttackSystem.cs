@@ -262,36 +262,49 @@ public class EnemyAttackSystem : MonoBehaviour
     }
     
     /// <summary>
-    /// 애니메이션 이벤트에서 호출되는 공격 함수
+    /// 애니메이션 이벤트에서 호출되는 공격 함수 - 즉시 처리 버전
     /// Attack1 애니메이션에서 실제 타격 순간에 호출
     /// </summary>
     public void OnAttack1Hit()
     {
-        Debug.Log($"[EnemyAttackSystem] 🗡️ Attack1 타격 실행! (Enemy: {gameObject.name})");
+        Debug.Log($"[EnemyAttackSystem] ⚡ Attack1 즉시 타격! (Enemy: {gameObject.name})");
         
-        // 즉시 데미지 처리 (물리적 감지 상관없이)
-        if (playerHealth != null)
+        // 즉시 데미지 처리 (최적화)
+        ProcessInstantAttack();
+    }
+    
+    /// <summary>
+    /// 즉시 공격 처리 (최적화된 버전)
+    /// </summary>
+    private void ProcessInstantAttack()
+    {
+        if (playerHealth == null)
         {
-            Vector3 attackPosition = attackPoint != null ? attackPoint.position : transform.position;
-            float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
+            Debug.LogError("[EnemyAttackSystem] ❌ VRPlayerHealth를 찾을 수 없음!");
+            return;
+        }
+        
+        Vector3 attackPosition = attackPoint != null ? attackPoint.position : transform.position;
+        float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
+        
+        Debug.Log($"[EnemyAttackSystem] 즉시 공격 - 거리: {distanceToPlayer:F2}m (범위: {attackRange}m)");
+        
+        // 거리 체크 후 즉시 데미지
+        if (distanceToPlayer <= attackRange)
+        {
+            Debug.Log("[EnemyAttackSystem] ✅ 즉시 데미지 적용!");
             
-            Debug.Log($"[EnemyAttackSystem] 공격 거리: {distanceToPlayer:F2}m (최대: {attackRange}m)");
+            // 즉시 데미지 적용
+            playerHealth.TakeDamage(attackDamage);
             
-            // 거리 체크만 하고 즉시 데미지
-            if (distanceToPlayer <= attackRange)
-            {
-                Debug.Log("[EnemyAttackSystem] ✅ 즉시 데미지 처리!");
-                playerHealth.TakeDamage(attackDamage);
-                PlayAttackEffects(attackPosition);
-            }
-            else
-            {
-                Debug.Log($"[EnemyAttackSystem] ❌ 공격 범위 밖: {distanceToPlayer:F2}m > {attackRange}m");
-            }
+            // 이펙트 재생
+            PlayAttackEffects(attackPosition);
+            
+            Debug.Log($"[EnemyAttackSystem] 🩸 {attackDamage} 데미지 즉시 적용 완료!");
         }
         else
         {
-            Debug.LogError("[EnemyAttackSystem] ❌ VRPlayerHealth를 찾을 수 없음!");
+            Debug.Log($"[EnemyAttackSystem] ❌ 공격 범위 밖: {distanceToPlayer:F2}m > {attackRange}m");
         }
     }
     
