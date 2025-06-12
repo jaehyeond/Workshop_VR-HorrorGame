@@ -24,7 +24,7 @@ public class AnimationEventSetupTool : EditorWindow
     {
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
         
-        GUILayout.Label("🎬 Animation Event 설정 도구", EditorStyles.boldLabel);
+        GUILayout.Label("Animation Event 설정 도구", EditorStyles.boldLabel);
         GUILayout.Space(10);
 
         EditorGUILayout.HelpBox(
@@ -35,14 +35,14 @@ public class AnimationEventSetupTool : EditorWindow
         GUILayout.Space(15);
 
         // 1. 자동 설정 (권장)
-        EditorGUILayout.LabelField("🚀 자동 설정 (권장)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("자동 설정 (권장)", EditorStyles.boldLabel);
         
-        if (GUILayout.Button("📦 모든 Enemy 프리팹에 EnemyAttackSystem 추가", GUILayout.Height(35)))
+        if (GUILayout.Button("모든 Enemy 프리팹에 EnemyAttackSystem 추가", GUILayout.Height(35)))
         {
             AddEnemyAttackSystemToAllPrefabs();
         }
         
-        if (GUILayout.Button("🎯 모든 Attack1 애니메이션에 Event 자동 추가", GUILayout.Height(35)))
+        if (GUILayout.Button("모든 Attack1 애니메이션에 Event 자동 추가", GUILayout.Height(35)))
         {
             AutoAddAnimationEvents();
         }
@@ -50,7 +50,7 @@ public class AnimationEventSetupTool : EditorWindow
         GUILayout.Space(20);
         
         // 2. 수동 설정
-        EditorGUILayout.LabelField("🔧 수동 설정 (고급)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("수동 설정 (고급)", EditorStyles.boldLabel);
         
         selectedClip = (AnimationClip)EditorGUILayout.ObjectField("Animation Clip:", selectedClip, typeof(AnimationClip), false);
         eventTime = EditorGUILayout.Slider("이벤트 시점 (0~1):", eventTime, 0f, 1f);
@@ -65,7 +65,7 @@ public class AnimationEventSetupTool : EditorWindow
         GUILayout.Space(20);
         
         // 3. 검증 도구
-        EditorGUILayout.LabelField("✅ 검증 도구", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("검증 도구", EditorStyles.boldLabel);
         
         if (GUILayout.Button("현재 설정 상태 확인", GUILayout.Height(25)))
         {
@@ -75,13 +75,13 @@ public class AnimationEventSetupTool : EditorWindow
         GUILayout.Space(15);
         
         // 4. 사용법 가이드
-        EditorGUILayout.LabelField("📖 사용법 가이드", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("사용법 가이드", EditorStyles.boldLabel);
         EditorGUILayout.TextArea(
             "1. '모든 Enemy 프리팹에 EnemyAttackSystem 추가' 클릭\n" +
             "2. '모든 Attack1 애니메이션에 Event 자동 추가' 클릭\n" +
             "3. '현재 설정 상태 확인'으로 검증\n" +
             "4. 플레이 모드에서 Enemy가 플레이어 공격 테스트\n\n" +
-            "⚠️ 주의: 이미 이벤트가 있는 애니메이션은 건너뜁니다.", 
+            "주의: 이미 이벤트가 있는 애니메이션은 건너뜁니다.", 
             GUILayout.Height(120));
 
         EditorGUILayout.EndScrollView();
@@ -172,7 +172,7 @@ public class AnimationEventSetupTool : EditorWindow
             : "";
 
         EditorUtility.DisplayDialog("완료!", 
-            $"🎬 {addedCount}개의 Attack 애니메이션에 OnAttack1Hit 이벤트를 추가했습니다!" + animationList +
+            $"{addedCount}개의 Attack 애니메이션에 OnAttack1Hit 이벤트를 추가했습니다!" + animationList +
             "\n\n이제 Enemy가 플레이어를 실제로 공격할 수 있습니다!", "확인");
     }
 
@@ -256,7 +256,7 @@ public class AnimationEventSetupTool : EditorWindow
     /// </summary>
     private void ValidateSetup()
     {
-        string report = "🔍 Animation Event 설정 검증 결과:\n\n";
+        string report = "Animation Event 설정 검증 결과:\n\n";
         
         // 1. Enemy 프리팹 체크
         string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
@@ -277,7 +277,7 @@ public class AnimationEventSetupTool : EditorWindow
             }
         }
         
-        report += $"📦 Enemy 프리팹: {setupCount}/{enemyCount} EnemyAttackSystem 설정됨\n";
+        report += $"Enemy 프리팹: {setupCount}/{enemyCount} EnemyAttackSystem 설정됨\n";
         
         // 2. 애니메이션 이벤트 체크
         string[] animGuids = AssetDatabase.FindAssets("t:AnimationClip", new[] { "Assets" });
@@ -304,26 +304,26 @@ public class AnimationEventSetupTool : EditorWindow
             }
         }
         
-        report += $"🎬 Attack 애니메이션: {eventCount}/{attackAnimCount} OnAttack1Hit 이벤트 설정됨\n";
+        report += $"Attack 애니메이션: {eventCount}/{attackAnimCount} OnAttack1Hit 이벤트 설정됨\n";
         
         // 3. 플레이어 설정 체크
         VRPlayerHealth playerHealth = FindFirstObjectByType<VRPlayerHealth>();
-        report += $"🎮 VRPlayerHealth: {(playerHealth != null ? "✅" : "❌")} 설정됨\n";
+        report += $"VRPlayerHealth: {(playerHealth != null ? "✅" : "❌")} 설정됨\n";
         
         // 4. Post Processing 체크
         VRPostProcessingManager postProcessing = FindFirstObjectByType<VRPostProcessingManager>();
-        report += $"🎨 Post Processing: {(postProcessing != null ? "✅" : "❌")} 활성화됨\n";
+        report += $"Post Processing: {(postProcessing != null ? "✅" : "❌")} 활성화됨\n";
         
         report += "\n";
         
         if (setupCount == enemyCount && eventCount > 0 && playerHealth != null && postProcessing != null)
         {
-            report += "🎉 모든 설정이 완료되었습니다!\n";
+            report += "모든 설정이 완료되었습니다!\n";
             report += "이제 Enemy가 플레이어를 공격할 때 VR 화면이 빨갛게 변합니다!";
         }
         else
         {
-            report += "⚠️ 일부 설정이 누락되었습니다.\n";
+            report += "일부 설정이 누락되었습니다.\n";
             report += "위의 자동 설정 버튼들을 사용해 설정을 완료하세요.";
         }
         

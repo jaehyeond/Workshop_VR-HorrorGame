@@ -17,7 +17,7 @@ public class MixamoAnimationEventFixer : EditorWindow
 
     void OnGUI()
     {
-        GUILayout.Label("🔧 Mixamo Animation Event 수정 도구", EditorStyles.boldLabel);
+        GUILayout.Label("Mixamo Animation Event 수정 도구", EditorStyles.boldLabel);
         GUILayout.Space(10);
 
         EditorGUILayout.HelpBox(
@@ -27,14 +27,14 @@ public class MixamoAnimationEventFixer : EditorWindow
 
         GUILayout.Space(15);
 
-        if (GUILayout.Button("🎬 Mixamo 공격 애니메이션을 복사하고 Event 추가", GUILayout.Height(40)))
+        if (GUILayout.Button("Mixamo 공격 애니메이션을 복사하고 Event 추가", GUILayout.Height(40)))
         {
             CreateEditableAttackAnimations();
         }
 
         GUILayout.Space(10);
 
-        if (GUILayout.Button("🔄 모든 Enemy Animator Controller 업데이트", GUILayout.Height(30)))
+        if (GUILayout.Button("모든 Enemy Animator Controller 업데이트", GUILayout.Height(30)))
         {
             UpdateEnemyAnimatorControllers();
         }
@@ -135,7 +135,7 @@ public class MixamoAnimationEventFixer : EditorWindow
         Debug.Log($"[MixamoAnimationEventFixer] 새 애니메이션 생성: {newPath}");
         
         EditorUtility.DisplayDialog("완료!", 
-            "✅ Enemy_Attack1_WithEvent.anim 파일이 생성되었습니다!\n" +
+            "Enemy_Attack1_WithEvent.anim 파일이 생성되었습니다!\n" +
             "이제 '모든 Enemy Animator Controller 업데이트'를 클릭하세요.", "확인");
     }
 

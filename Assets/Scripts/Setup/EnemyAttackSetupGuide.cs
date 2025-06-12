@@ -4,16 +4,16 @@ using UnityEditor;
 /// <summary>
 /// Enemy Attack 시스템 설정 가이드
 /// 
-/// 🔥 VR 호러 게임에서 Enemy가 Attack1으로 플레이어를 공격할 때 
+/// VR 호러 게임에서 Enemy가 Attack1으로 플레이어를 공격할 때 
 /// Meta Quest 헤드셋이 빨갛게 변하는 시스템을 완성하기 위한 설정 가이드
 /// 
-/// 📋 필요한 설정:
+/// 필요한 설정:
 /// 1. Enemy 프리팹에 EnemyAttackSystem 컴포넌트 추가
 /// 2. Attack1 애니메이션에 Animation Event 추가
 /// 3. 플레이어(VR Camera)에 VRPlayerHealth 컴포넌트 추가
 /// 4. VRPostProcessingManager가 활성화되어 있는지 확인
 /// 
-/// 🎯 결과:
+/// 결과:
 /// - Enemy Attack1 → 플레이어 데미지 → VR 화면이 빨갛게 변함 + 햅틱 피드백
 /// </summary>
 
@@ -25,36 +25,36 @@ public class EnemyAttackSetupGuide
     [TextArea(10, 20)]
     public string guideText = @"VR Enemy Attack 시스템 설정 가이드
 
-1️ Enemy 프리팹 설정:
+1. Enemy 프리팹 설정:
    - Fanatic Enemy, Main Boss, Priest 등 모든 Enemy 프리팹 선택
    - Inspector에서 'Add Component' → 'EnemyAttackSystem' 추가
    - Attack Damage: 25 (권장값)
    - Attack Range: 2.5 (권장값)
 
-2️ Attack1 애니메이션에 Animation Event 추가:
+2. Attack1 애니메이션에 Animation Event 추가:
    - Enemy의 Animator Controller 열기
    - Attack1 애니메이션 클립 선택
    - Animation 창에서 타격 순간(보통 50~70% 지점)에 Event 추가
    - Function: OnAttack1Hit
    - 이벤트가 EnemyAttackSystem.OnAttack1Hit() 함수를 호출함
 
-3️ 플레이어 VR 설정:
+3. 플레이어 VR 설정:
    - VR Camera(OVRCameraRig) 오브젝트 선택
    - Inspector에서 'Add Component' → 'VRPlayerHealth' 추가
    - Max Health: 100 (권장값)
    - Damage Effect Duration: 1.5초 (권장값)
 
-4️ Post Processing 확인:
+4. Post Processing 확인:
    - VRPostProcessingManager가 씬에 있는지 확인
    - Global Volume이 활성화되어 있는지 확인
 
- 완료 후 결과:
+완료 후 결과:
    Enemy가 Attack1으로 플레이어를 때릴 때마다
    → VR 헤드셋 화면이 빨갛게 변함
    → 양손 컨트롤러에 햅틱 피드백
    → 체력에 따른 동적 Post Processing 효과
 
- 주의사항:
+주의사항:
    - 모든 Enemy 프리팹에 EnemyAttackSystem 추가 필요
    - Animation Event는 각 Enemy의 Attack1 애니메이션마다 개별 설정
    - VRPlayerHealth는 플레이어 오브젝트에만 한 번만 추가";
@@ -95,17 +95,17 @@ public class EnemyAttackSetupWindow : EditorWindow
         // 자동 설정 버튼들
         EditorGUILayout.LabelField("자동 설정 도구:", EditorStyles.boldLabel);
         
-        if (GUILayout.Button("1️ 모든 Enemy 프리팹에 EnemyAttackSystem 추가", GUILayout.Height(30)))
+        if (GUILayout.Button("1. 모든 Enemy 프리팹에 EnemyAttackSystem 추가", GUILayout.Height(30)))
         {
             AutoSetupEnemyPrefabs();
         }
         
-        if (GUILayout.Button("2️ VR 플레이어에 VRPlayerHealth 추가", GUILayout.Height(30)))
+        if (GUILayout.Button("2. VR 플레이어에 VRPlayerHealth 추가", GUILayout.Height(30)))
         {
             AutoSetupPlayerHealth();
         }
         
-        if (GUILayout.Button("3️ 현재 설정 상태 검증", GUILayout.Height(30)))
+        if (GUILayout.Button("3. 현재 설정 상태 검증", GUILayout.Height(30)))
         {
             ValidateCurrentSetup();
         }
@@ -184,7 +184,7 @@ public class EnemyAttackSetupWindow : EditorWindow
 
     private void ValidateCurrentSetup()
     {
-        string report = "🔍 VR Enemy Attack 시스템 검증 결과:\n\n";
+        string report = "VR Enemy Attack 시스템 검증 결과:\n\n";
         
         // 1. Enemy 프리팹 체크
         string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
@@ -212,12 +212,12 @@ public class EnemyAttackSetupWindow : EditorWindow
         OVRCameraRig cameraRig = FindFirstObjectByType<OVRCameraRig>();
         VRPlayerHealth playerHealth = FindFirstObjectByType<VRPlayerHealth>();
         
-        report += $"VR 플레이어: {(cameraRig != null ? "✅" : "❌")} 발견\n";
-        report += $"VRPlayerHealth: {(playerHealth != null ? "✅" : "❌")} 설정됨\n";
+        report += $"VR 플레이어: {(cameraRig != null ? "발견" : "없음")}\n";
+        report += $"VRPlayerHealth: {(playerHealth != null ? "설정됨" : "필요함")}\n";
         
         // 3. Post Processing 체크
         VRPostProcessingManager postProcessing = FindFirstObjectByType<VRPostProcessingManager>();
-        report += $"Post Processing: {(postProcessing != null ? "✅" : "❌")} 활성화됨\n";
+        report += $"Post Processing: {(postProcessing != null ? "활성화됨" : "필요함")}\n";
         
         // 결과 출력
         report += "\n" + (setupPrefabCount == enemyPrefabCount && playerHealth != null && postProcessing != null 

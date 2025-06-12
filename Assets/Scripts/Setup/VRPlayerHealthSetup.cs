@@ -76,7 +76,7 @@ public class VRPlayerHealthSetup : EditorWindow
         // 5. 변경사항 저장
         EditorUtility.SetDirty(cameraRig.gameObject);
 
-        Debug.Log("[VRPlayerHealthSetup] ✅ VRPlayerHealth 추가 완료!");
+        Debug.Log("[VRPlayerHealthSetup] VRPlayerHealth 추가 완료!");
         
         EditorUtility.DisplayDialog("Success", 
             "VRPlayerHealth가 성공적으로 추가되었습니다!\n\n" +
@@ -85,32 +85,32 @@ public class VRPlayerHealthSetup : EditorWindow
 
     private void CheckCurrentSetup()
     {
-        string report = "🔍 VR Player Health 설정 확인:\n\n";
+        string report = "VR Player Health 설정 확인:\n\n";
         
         // OVRCameraRig 확인
         OVRCameraRig cameraRig = FindFirstObjectByType<OVRCameraRig>();
         if (cameraRig != null)
         {
-            report += "✅ OVRCameraRig 발견\n";
+            report += "OVRCameraRig 발견\n";
             
             // VRPlayerHealth 확인
             VRPlayerHealth playerHealth = cameraRig.GetComponent<VRPlayerHealth>();
             if (playerHealth != null)
             {
-                report += "✅ VRPlayerHealth 컴포넌트 존재\n";
+                report += "VRPlayerHealth 컴포넌트 존재\n";
                 report += $"   - Max Health: {playerHealth.maxHealth}\n";
                 report += $"   - Damage Duration: {playerHealth.damageEffectDuration}s\n";
                 report += $"   - Damage Intensity: {playerHealth.damageScreenIntensity}\n";
             }
             else
             {
-                report += "❌ VRPlayerHealth 컴포넌트 없음\n";
+                report += "VRPlayerHealth 컴포넌트 없음\n";
                 report += "   → 'Auto Setup VR Player Health' 버튼을 클릭하세요\n";
             }
         }
         else
         {
-            report += "❌ OVRCameraRig를 찾을 수 없음\n";
+            report += "OVRCameraRig를 찾을 수 없음\n";
             report += "   → 씬에 VR 플레이어를 추가하세요\n";
         }
 
@@ -118,11 +118,11 @@ public class VRPlayerHealthSetup : EditorWindow
         VRPostProcessingManager postManager = FindFirstObjectByType<VRPostProcessingManager>();
         if (postManager != null)
         {
-            report += "✅ VRPostProcessingManager 존재\n";
+            report += "VRPostProcessingManager 존재\n";
         }
         else
         {
-            report += "❌ VRPostProcessingManager 없음\n";
+            report += "VRPostProcessingManager 없음\n";
             report += "   → Window → VR Horror Game → Setup VR Post Processing Manager\n";
         }
 

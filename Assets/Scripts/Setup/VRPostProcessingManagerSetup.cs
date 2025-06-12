@@ -101,15 +101,15 @@ public class VRPostProcessingManagerSetup : EditorWindow
         // 6. Camera Post Processing 자동 활성화
         EnableCameraPostProcessingAuto();
 
-        Debug.Log("[VRPostProcessingManagerSetup] ✅ VRPostProcessingManager created successfully!");
-        Debug.Log("[VRPostProcessingManagerSetup] ✅ Camera Post Processing enabled");
-        Debug.Log("[VRPostProcessingManagerSetup] 🎮 Test VR damage effect with [T] key!");
+        Debug.Log("[VRPostProcessingManagerSetup] VRPostProcessingManager created successfully!");
+        Debug.Log("[VRPostProcessingManagerSetup] Camera Post Processing enabled");
+        Debug.Log("[VRPostProcessingManagerSetup] Test VR damage effect with [T] key!");
         
         EditorUtility.DisplayDialog("Setup Complete!", 
             "VR Post Processing Manager 설정 완료!\n\n" +
-            "✅ Global Volume 생성\n" +
-            "✅ Volume Profiles 할당\n" +
-            "✅ Camera Post Processing 활성화\n\n" +
+            "Global Volume 생성\n" +
+            "Volume Profiles 할당\n" +
+            "Camera Post Processing 활성화\n\n" +
             "[T] 키로 VR 피격 효과를 테스트하세요!", "확인");
     }
 
@@ -224,11 +224,11 @@ public class VRPostProcessingManagerSetup : EditorWindow
             cameraData.antialiasingQuality = AntialiasingQuality.Medium;
 
             EditorUtility.SetDirty(mainCamera.gameObject);
-            Debug.Log($"[VRPostProcessingManagerSetup] ✅ Camera Post Processing 활성화: {mainCamera.name}");
+            Debug.Log($"[VRPostProcessingManagerSetup] Camera Post Processing 활성화: {mainCamera.name}");
         }
         else
         {
-            Debug.LogWarning("[VRPostProcessingManagerSetup] ⚠️ Main Camera를 찾을 수 없습니다!");
+            Debug.LogWarning("[VRPostProcessingManagerSetup] Main Camera를 찾을 수 없습니다!");
         }
     }
 
