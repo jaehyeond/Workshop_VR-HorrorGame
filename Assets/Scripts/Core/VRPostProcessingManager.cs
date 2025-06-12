@@ -252,7 +252,6 @@ public class VRPostProcessingManager : MonoBehaviour
     /// </summary>
     public void TriggerInstantDamageFlash()
     {
-        Debug.Log("[VRPostProcessingManager] 즉시 피격 플래시 효과!");
         StartCoroutine(InstantDamageFlashCoroutine());
     }
     
@@ -281,8 +280,7 @@ public class VRPostProcessingManager : MonoBehaviour
             HealthEffectSettings settings = healthEffectSettings[stateIndex];
             ApplyHealthEffect(settings);
             
-            Debug.Log($"[VRPostProcessingManager] 체력별 효과 적용: {healthState} (비네팅: {settings.vignetteIntensity})");
-        }
+            }
     }
     
     /// <summary>
@@ -328,7 +326,6 @@ public class VRPostProcessingManager : MonoBehaviour
         }
         
         isEffectActive = true;
-        Debug.Log("[VRPostProcessingManager] 즉시 플래시 효과 적용!");
         
         // 모든 Global Volume 찾아서 우선순위 높이기
         var allVolumes = FindObjectsByType<UnityEngine.Rendering.Volume>(FindObjectsSortMode.None);
@@ -353,8 +350,6 @@ public class VRPostProcessingManager : MonoBehaviour
         
         // 블룸으로 강렬한 효과
         bloom.intensity.value = 3.0f; // 최대 블룸
-        
-        Debug.Log("[VRPostProcessingManager] 즉시 플래시 효과 적용 완료!");
     }
     
     /// <summary>
@@ -367,8 +362,6 @@ public class VRPostProcessingManager : MonoBehaviour
             Debug.LogWarning("[VRPostProcessingManager] Post Processing 컴포넌트가 없습니다!");
             return;
         }
-        
-        Debug.Log($"[VRPostProcessingManager] 체력별 효과 적용: 비네팅={settings.vignetteIntensity}, 채도={settings.saturation}");
         
         // 비네팅 효과
         vignette.intensity.value = settings.vignetteIntensity;
@@ -416,8 +409,6 @@ public class VRPostProcessingManager : MonoBehaviour
     {
         if (vignette == null) return;
         
-        Debug.Log($"[VRPostProcessingManager] 체력 기반 효과 업데이트: {healthPercentage:P1}");
-        
         // 체력이 낮을수록 강한 비네팅
         if (healthPercentage <= 0.5f)
         {
@@ -427,7 +418,6 @@ public class VRPostProcessingManager : MonoBehaviour
             vignette.intensity.value = vignetteIntensity;
             vignette.color.value = Color.red;
             
-            Debug.Log($"[VRPostProcessingManager] 체력 기반 효과: 비네팅={vignetteIntensity:F2}");
         }
         else
         {
@@ -440,7 +430,6 @@ public class VRPostProcessingManager : MonoBehaviour
     /// </summary>
     public void TriggerGameOverEffect()
     {
-        Debug.Log("[VRPostProcessingManager] Game Over 효과 시작!");
         StartCoroutine(GameOverEffectCoroutine());
     }
     

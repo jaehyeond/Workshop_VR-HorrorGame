@@ -63,10 +63,6 @@ public class AxeWeapon : MonoBehaviour
             {
                 Debug.LogWarning("[AxeWeapon] AttachPoint가 없습니다. 기본 위치 사용.");
             }
-            else
-            {
-                Debug.Log("[AxeWeapon] AttachPoint 자동 찾기 성공!");
-            }
         }
         
         // 원래 위치와 회전 저장
@@ -83,28 +79,22 @@ public class AxeWeapon : MonoBehaviour
         // Hand Anchor 자동 찾기
         if (handAnchor == null)
         {
-            Debug.Log("[AxeWeapon] Hand Anchor 찾는 중...");
-            
             // 방법 1: OVRCameraRig 찾기 (가장 정확한 방법)
             GameObject cameraRig = GameObject.Find("OVRCameraRig");
             if (cameraRig != null)
             {
-                Debug.Log("[AxeWeapon] OVRCameraRig 발견!");
                 Transform rightHand = cameraRig.transform.Find("TrackingSpace/RightHandAnchor");
                 if (rightHand != null)
                 {
                     handAnchor = rightHand;
-                    Debug.Log("[AxeWeapon] Hand Anchor 자동 설정 완료!");
                 }
                 else
                 {
-                    Debug.LogWarning("[AxeWeapon] TrackingSpace/RightHandAnchor 경로를 찾을 수 없습니다.");
                     // 다른 경로 시도
                     rightHand = cameraRig.transform.Find("RightHandAnchor");
                     if (rightHand != null)
                     {
                         handAnchor = rightHand;
-                        Debug.Log("[AxeWeapon] 대체 경로로 Hand Anchor 설정 완료!");
                     }
                 }
             }
@@ -112,8 +102,6 @@ public class AxeWeapon : MonoBehaviour
             // 방법 2: Building Block 구조 찾기 (현재 씬 구조)
             if (handAnchor == null)
             {
-                Debug.Log("[AxeWeapon] Building Block 구조에서 찾는 중...");
-                
                 // PlayerController나 Camera Rig 찾기
                 GameObject playerController = GameObject.Find("PlayerController");
                 if (playerController != null)
@@ -128,7 +116,6 @@ public class AxeWeapon : MonoBehaviour
                     if (rightHand != null)
                     {
                         handAnchor = rightHand;
-                        Debug.Log($"[AxeWeapon] Building Block에서 Hand Anchor 설정: {rightHand.name}");
                     }
                 }
             }
@@ -136,8 +123,6 @@ public class AxeWeapon : MonoBehaviour
             // 방법 3: 태그 기반 찾기 (더 안전한 방법)
             if (handAnchor == null)
             {
-                Debug.Log("[AxeWeapon] 태그 기반으로 찾는 중...");
-                
                 GameObject[] handObjects = GameObject.FindGameObjectsWithTag("Player");
                 foreach (GameObject obj in handObjects)
                 {
@@ -151,7 +136,6 @@ public class AxeWeapon : MonoBehaviour
                     if (rightHand != null)
                     {
                         handAnchor = rightHand;
-                        Debug.Log($"[AxeWeapon] 태그 기반으로 Hand Anchor 설정: {rightHand.name}");
                         break;
                     }
                 }
@@ -174,8 +158,6 @@ public class AxeWeapon : MonoBehaviour
         }
         
         lastPosition = transform.position;
-        
-        Debug.Log("[AxeWeapon] Controller 기반 무기 시스템 초기화 완료");
     }
     
     private void Update()
@@ -219,15 +201,11 @@ public class AxeWeapon : MonoBehaviour
             return;
         }
 
-        Debug.Log("[AxeWeapon] 도끼 장착!");
-        
         isEquipped = true;
         
                 // AttachPoint를 사용한 정확한 장착
         if (attachPoint != null)
         {
-            Debug.Log("[AxeWeapon] AttachPoint 사용하여 장착");
-            
             // 도끼 전체를 손에 붙이되
             transform.SetParent(handAnchor);
             
@@ -290,25 +268,20 @@ public class AxeWeapon : MonoBehaviour
     
     private void Attack()
     {
-        Debug.Log("[AxeWeapon] Attack 메서드 호출됨!");
-        
         // 쿨다운 체크
         if (Time.time - lastAttackTime < attackCooldown)
         {
-            Debug.Log("[AxeWeapon] 쿨다운 중이라 공격 취소");
             return;
         }
             
         // 휘두르기 속도 체크
         Vector3 velocity = (transform.position - lastPosition) / Time.deltaTime;
         float swingSpeed = velocity.magnitude;
-        Debug.Log($"[AxeWeapon] 휘두르기 속도: {swingSpeed:F2}");
         
         // 최소 속도 체크 (컨트롤러 기반이므로 더 관대하게)
         if (swingSpeed < minSwingVelocity * 0.5f)
         {
             swingSpeed = minSwingVelocity; // 기본 속도 보장
-            Debug.Log("[AxeWeapon] 속도 부족으로 기본 속도 적용");
         }
         
         // 광범위 타격 감지 (Enemy 전체를 감싸도록)
@@ -320,10 +293,6 @@ public class AxeWeapon : MonoBehaviour
             transform.position + transform.up * 0.5f,       // 위쪽
             transform.position - transform.up * 0.3f        // 아래쪽
         };
-        
-        Debug.Log($"[AxeWeapon] === 다중 지점 타격 감지 시작 ===");
-        Debug.Log($"[AxeWeapon] 감지 반경: {hitRadius}");
-        Debug.Log($"[AxeWeapon] Enemy Layer Mask: {enemyLayer.value}");
         
         List<Collider> allHitColliders = new List<Collider>();
         
@@ -341,20 +310,9 @@ public class AxeWeapon : MonoBehaviour
         }
         
         Collider[] hitColliders = allHitColliders.ToArray();
-        Debug.Log($"[AxeWeapon] 감지된 콜라이더 수: {hitColliders.Length}");
-        
-        // 모든 감지된 오브젝트 정보 출력
-        for (int i = 0; i < hitColliders.Length; i++)
-        {
-            GameObject obj = hitColliders[i].gameObject;
-            CultistAI cultist = obj.GetComponent<CultistAI>();
-            //Debug.Log($"[AxeWeapon] 감지된 오브젝트 {i}: {obj.name}, 레이어: {obj.layer}, CultistAI: {(cultist != null ? "있음" : "없음")}");
-        }
         
         foreach (Collider hitCollider in hitColliders)
         {
-            Debug.Log($"[AxeWeapon] 감지된 오브젝트: {hitCollider.name}");
-            
             // 광신도 타격 처리
             CultistAI cultist = hitCollider.GetComponent<CultistAI>();
             if (cultist != null)
@@ -378,8 +336,6 @@ public class AxeWeapon : MonoBehaviour
     
     private void HitCultist(CultistAI cultist, float swingSpeed)
     {
-        Debug.Log($"[AxeWeapon] ##### HitCultist 함수 시작! #####");
-        
         // 기본 50 데미지 (기존 체력 시스템 사용)
         float finalDamage = baseDamage;
         

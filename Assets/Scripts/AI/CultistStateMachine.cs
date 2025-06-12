@@ -98,8 +98,6 @@ public class CultistStateMachine : MonoBehaviour
     {
         if (currentState == newState) return;
         
-        Debug.Log($"[{name}] 상태 변경: {currentState} -> {newState}");
-        
         // 이전 상태 종료 처리
         ExitState(currentState);
         

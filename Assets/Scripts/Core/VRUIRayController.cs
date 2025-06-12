@@ -334,8 +334,6 @@ public class VRUIRayController : MonoBehaviour
     /// </summary>
     void OnUIHoverEnter()
     {
-        Debug.Log($"[VRUIRayController] UI 호버 진입: {currentUIObject.name}");
-        
         // 호버 햅틱 피드백
         TriggerHapticFeedback(hoverHapticStrength, hapticDuration);
         
@@ -351,8 +349,6 @@ public class VRUIRayController : MonoBehaviour
     /// </summary>
     void OnUIHoverExit()
     {
-        Debug.Log($"[VRUIRayController] UI 호버 종료");
-        
         // 버튼 하이라이트 해제
         if (currentButton != null)
         {
@@ -366,8 +362,6 @@ public class VRUIRayController : MonoBehaviour
     void OnButtonClick()
     {
         if (currentButton == null) return;
-        
-        Debug.Log($"[VRUIRayController] 버튼 클릭: {currentButton.name}");
         
         // 클릭 햅틱 피드백
         TriggerHapticFeedback(clickHapticStrength, hapticDuration * 2f);
@@ -478,8 +472,6 @@ public class VRUIRayController : MonoBehaviour
         }
         
         this.enabled = enabled;
-        
-        Debug.Log($"[VRUIRayController] Ray 상태 변경: {(enabled ? "활성화" : "비활성화")}");
     }
     
     void OnDestroy()

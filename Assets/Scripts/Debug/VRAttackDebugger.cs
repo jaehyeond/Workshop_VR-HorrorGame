@@ -10,7 +10,7 @@ public class VRAttackDebugger : MonoBehaviour
 {
     [Header("디버그 UI")]
     public TextMeshProUGUI debugText;
-    public bool enableDebugUI = true;
+    public bool enableDebugUI = false;
     
     [Header("테스트 설정")]
     public float testDamageAmount = 25f;
@@ -52,9 +52,11 @@ public class VRAttackDebugger : MonoBehaviour
     
     void Update()
     {
+        if (!enableDebugUI) return; // Debug UI가 비활성화되면 Update 로직 스킵
+        
         UpdateDebugInfo();
         
-        if (enableDebugUI && debugText != null)
+        if (debugText != null)
         {
             debugText.text = debugInfo;
         }

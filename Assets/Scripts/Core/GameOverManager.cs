@@ -98,8 +98,6 @@ public class GameOverManager : MonoBehaviour
         
         // 이벤트 연결
         SetupEvents();
-        
-        Debug.Log("[GameOverManager] 초기화 완료!");
     }
     
     /// <summary>
@@ -109,17 +107,9 @@ public class GameOverManager : MonoBehaviour
     {
         // VRPlayerHealth 찾기
         playerHealth = FindFirstObjectByType<VRPlayerHealth>();
-        if (playerHealth == null)
-        {
-            Debug.LogError("[GameOverManager] VRPlayerHealth를 찾을 수 없습니다!");
-        }
         
         // PlayerSpawnManager 찾기
         spawnManager = PlayerSpawnManager.Instance;
-        if (spawnManager == null)
-        {
-            Debug.LogError("[GameOverManager] PlayerSpawnManager를 찾을 수 없습니다!");
-        }
         
         // VR 카메라 찾기
         FindVRCamera();

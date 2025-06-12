@@ -119,7 +119,6 @@ public class EnemyAttackSystem : MonoBehaviour
     /// </summary>
     public void OnAttack1Hit()
     {
-        Debug.Log($"[EnemyAttackSystem] Attack1 타격 실행! (Enemy: {gameObject.name})");
         ProcessInstantAttack();
     }
     
@@ -130,31 +129,20 @@ public class EnemyAttackSystem : MonoBehaviour
     {
         if (playerHealth == null)
         {
-            Debug.LogError("[EnemyAttackSystem] VRPlayerHealth를 찾을 수 없음!");
             return;
         }
         
         Vector3 attackPosition = attackPoint != null ? attackPoint.position : transform.position;
         float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
         
-        Debug.Log($"[EnemyAttackSystem] 공격 거리: {distanceToPlayer:F2}m (범위: {attackRange}m)");
-        
         // 거리 체크 후 즉시 데미지
         if (distanceToPlayer <= attackRange)
         {
-            Debug.Log("[EnemyAttackSystem] 데미지 적용!");
-            
             // 즉시 데미지 적용
             playerHealth.TakeDamage(attackDamage);
             
             // 이펙트 재생
             PlayAttackEffects(attackPosition);
-            
-            Debug.Log($"[EnemyAttackSystem] {attackDamage} 데미지 적용 완료!");
-        }
-        else
-        {
-            Debug.Log($"[EnemyAttackSystem] 공격 범위 밖: {distanceToPlayer:F2}m > {attackRange}m");
         }
     }
     
@@ -163,7 +151,7 @@ public class EnemyAttackSystem : MonoBehaviour
     /// </summary>
     public void OnPlayerInAttackRange(bool inRange)
     {
-        Debug.Log($"[EnemyAttackSystem] 플레이어 물리적 타격 범위: {(inRange ? "IN" : "OUT")}");
+        // 물리적 타격 범위 처리 (필요시 추가 로직)
     }
     
     /// <summary>
@@ -191,42 +179,31 @@ public class EnemyAttackSystem : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(rayStart, rayDirection, out hit, rayDistance + 0.5f))
             {
-                if (IsPlayerRelated(hit.transform))
-                {
-                    if (enableDebug)
-                    {
-                        Debug.Log($"[EnemyAttackSystem] 시야선 확보! 히트: {hit.transform.name}");
-                        Debug.DrawRay(rayStart, rayDirection * hit.distance, Color.green, 1f);
-                    }
-                    return true;
-                }
-            }
-            else
+                            if (IsPlayerRelated(hit.transform))
             {
                 if (enableDebug)
                 {
-                    Debug.Log("[EnemyAttackSystem] 시야선 확보! (장애물 없음)");
-                    Debug.DrawRay(rayStart, rayDirection * rayDistance, Color.green, 1f);
+                    Debug.DrawRay(rayStart, rayDirection * hit.distance, Color.green, 1f);
                 }
                 return true;
             }
         }
-        
-        if (enableDebug)
-        {
-            Debug.Log("[EnemyAttackSystem] 모든 시야선이 막힘");
-        }
-        
-        // 거리 보정
-        float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
-        if (distanceToPlayer <= attackRange * 0.8f)
+        else
         {
             if (enableDebug)
             {
-                Debug.Log($"[EnemyAttackSystem] 거리 보정으로 공격 성공! 거리: {distanceToPlayer:F2}m");
+                Debug.DrawRay(rayStart, rayDirection * rayDistance, Color.green, 1f);
             }
             return true;
         }
+    }
+    
+    // 거리 보정
+    float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
+    if (distanceToPlayer <= attackRange * 0.8f)
+    {
+        return true;
+    }
         
         return false;
     }

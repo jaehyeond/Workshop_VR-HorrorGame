@@ -86,17 +86,13 @@ public class VRPlayerHealth : MonoBehaviour
     /// </summary>
     public void TakeDamage(float damage)
     {
-        Debug.Log($"[VRPlayerHealth] TakeDamage 호출됨! 데미지: {damage}");
-        
         if (isInvincible)
         {
-            Debug.Log("[VRPlayerHealth] 무적 상태라서 데미지 무시");
             return;
         }
         
         if (currentHealth <= 0)
         {
-            Debug.Log("[VRPlayerHealth] 이미 죽은 상태라서 데미지 무시");
             return;
         }
         
@@ -104,18 +100,14 @@ public class VRPlayerHealth : MonoBehaviour
         currentHealth = Mathf.Max(0, currentHealth - damage);
         lastDamageTime = Time.time; // 마지막 피격 시간 기록
         
-        Debug.Log($"[VRPlayerHealth] 플레이어가 {damage} 데미지를 받았습니다! 현재 체력: {currentHealth}/{maxHealth}");
-        
         // 이벤트 발생
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
         OnPlayerDamaged?.Invoke();
         
         // VR 피격 효과 (즉시 적용)
-        Debug.Log("[VRPlayerHealth] VR 피격 효과 즉시 적용!");
         ApplyImmediateDamageEffect();
         
         // 햅틱 피드백
-        Debug.Log("[VRPlayerHealth] 햅틱 피드백 시작!");
         TriggerDamageHaptics();
         
         // 무적 시간 적용
@@ -140,18 +132,11 @@ public class VRPlayerHealth : MonoBehaviour
     {
         if (postProcessingManager == null) 
         {
-            Debug.LogError("[VRPlayerHealth] VRPostProcessingManager를 찾을 수 없음!");
-            
             // 다시 찾기 시도
             postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
             if (postProcessingManager == null)
             {
-                Debug.LogError("[VRPlayerHealth] VRPostProcessingManager를 다시 찾아도 없음!");
                 return;
-            }
-            else
-            {
-                Debug.Log("[VRPlayerHealth] VRPostProcessingManager를 다시 찾았음!");
             }
         }
         
@@ -170,7 +155,6 @@ public class VRPlayerHealth : MonoBehaviour
         if (postProcessingManager == null) return;
         
         float healthPercentage = currentHealth / maxHealth;
-        Debug.Log($"[VRPlayerHealth] 체력별 효과 업데이트: {healthPercentage:P1} ({currentHealth}/{maxHealth})");
         
         VRPostProcessingManager.HealthState healthState;
         
@@ -178,25 +162,21 @@ public class VRPlayerHealth : MonoBehaviour
         {
             // 75-100%: 연한 분홍 외각 (0.3 intensity)
             healthState = VRPostProcessingManager.HealthState.Good;
-            Debug.Log("[VRPlayerHealth] 체력 상태: 양호 (연한 분홍 외각)");
         }
         else if (healthPercentage >= 0.50f)
         {
             // 50-75%: 더 진한 분홍 (0.55 intensity)
             healthState = VRPostProcessingManager.HealthState.Caution;
-            Debug.Log("[VRPlayerHealth] 체력 상태: 주의 (더 진한 분홍)");
         }
         else if (healthPercentage >= 0.25f)
         {
             // 25-50%: 진한 빨강 (0.75 intensity)
             healthState = VRPostProcessingManager.HealthState.Danger;
-            Debug.Log("[VRPlayerHealth] 체력 상태: 위험 (진한 빨강)");
         }
         else if (healthPercentage > 0f)
         {
             // 0-25%: 완전 빨강 (1.0 intensity)
             healthState = VRPostProcessingManager.HealthState.Critical;
-            Debug.Log("[VRPlayerHealth] 체력 상태: 치명적 (완전 빨강)");
         }
         else
         {

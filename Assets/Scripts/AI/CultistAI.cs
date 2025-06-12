@@ -20,7 +20,7 @@ public class CultistAI : MonoBehaviour
     public Transform prayingSpot;
     
     [Header("디버그")]
-    public bool enableDebugLogs = true;
+    public bool enableDebugLogs = false;
     
     // 컴포넌트 참조
     private NavMeshAgent agent;
@@ -391,7 +391,6 @@ public class CultistAI : MonoBehaviour
             case CultistStateMachine.AIState.Praying:
                 if (canSeePlayer)
                 {
-                    DebugLog("기도 중 플레이어 발견!");
                     stateMachine.StartObserving();
                     lastKnownPlayerPosition = player.position;
                 }
@@ -423,7 +422,6 @@ public class CultistAI : MonoBehaviour
                 }
                 else
                 {
-                    DebugLog("추격 중 플레이어를 놓침");
                     stateMachine.LoseTarget();
                 }
                 break;
@@ -431,7 +429,6 @@ public class CultistAI : MonoBehaviour
             case CultistStateMachine.AIState.Attacking:
                 if (!canSeePlayer)
                 {
-                    DebugLog("공격 중 플레이어를 놓침");
                     stateMachine.LoseTarget();
                 }
                 break;
@@ -455,7 +452,6 @@ public class CultistAI : MonoBehaviour
         if (stateMachine.IsChasing && inAttackRange && canSeePlayer)
         {
             stateMachine.SetState(CultistStateMachine.AIState.Attacking);
-            DebugLog("공격 범위 진입 - 공격 상태로 전환");
         }
         
         // 공격 중이고 범위를 벗어났다면 추격 재개
@@ -464,7 +460,6 @@ public class CultistAI : MonoBehaviour
             // 공격 범위를 조금이라도 벗어나면 즉시 추격 재개
             if (distanceToPlayer > attackRange * 1.2f || !canSeePlayer)
             {
-                DebugLog("공격 범위 벗어남 - 추격 재개");
                 animator.SetBool("InAttackRange", false);
                 stateMachine.SetState(CultistStateMachine.AIState.Chasing);
             }
@@ -476,7 +471,6 @@ public class CultistAI : MonoBehaviour
     {
         if (isHiding && (stateMachine.IsChasing || stateMachine.IsAttacking))
         {
-            DebugLog("플레이어 은신 - 추적 중단");
             stateMachine.LoseTarget();
         }
     }

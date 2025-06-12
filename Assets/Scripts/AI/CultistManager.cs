@@ -90,7 +90,6 @@ public class CultistManager : MonoBehaviour
         {
             isPlayerHiding = currentHidingState;
             OnPlayerHidingChanged?.Invoke(isPlayerHiding);
-            DebugLog($"플레이어 은신 상태 변경: {isPlayerHiding}");
         }
     }
     
