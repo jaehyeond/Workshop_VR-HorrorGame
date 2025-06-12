@@ -236,9 +236,9 @@ Assets/
 ## 🛠 개발 도구 및 환경
 
 ### Unity 설정
-- **버전**: Unity 2022.3 LTS
-- **렌더 파이프라인**: Built-in Render Pipeline
-- **XR 플러그인**: Oculus XR Plugin
+- **버전**: Unity 6 (6000.0.42f1)
+- **렌더 파이프라인**: Universal Render Pipeline (URP)
+- **XR 플러그인**: Meta XR All-in-One SDK
 - **Build Target**: Android (Meta Quest)
 
 ### Meta Quest 설정

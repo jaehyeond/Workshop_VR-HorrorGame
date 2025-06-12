@@ -199,12 +199,16 @@ public class AnimationEventSetupTool : EditorWindow
         newEvent.time = clip.length * time; // 상대적 시간을 절대 시간으로 변환
         newEvent.functionName = "OnAttack1Hit";
         
+        // Unity 2022+ 호환: AnimationUtility 사용
+        #if UNITY_2022_1_OR_NEWER
+        UnityEditor.AnimationUtility.SetAnimationEvents(clip, System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Append(existingEvents, newEvent)));
+        #else
         // 기존 이벤트들과 새 이벤트를 합쳐서 다시 설정
         AnimationEvent[] newEvents = new AnimationEvent[existingEvents.Length + 1];
         existingEvents.CopyTo(newEvents, 0);
         newEvents[existingEvents.Length] = newEvent;
-        
         clip.events = newEvents;
+        #endif
         
         EditorUtility.SetDirty(clip);
         AssetDatabase.SaveAssets();
