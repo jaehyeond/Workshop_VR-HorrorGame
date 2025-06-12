@@ -12,10 +12,10 @@ public class VRAttackDebugger : MonoBehaviour
     public TextMeshProUGUI debugText;
     public bool enableDebugUI = true;
     
-    [Header("강제 테스트")]
+    [Header("테스트 설정")]
     public float testDamageAmount = 25f;
     
-    // New Input System
+    // New Input System (T키만 유지)
     private InputAction testDamageAction;
     
     // 참조
@@ -70,13 +70,13 @@ public class VRAttackDebugger : MonoBehaviour
         cameraRig = FindFirstObjectByType<OVRCameraRig>();
         
         Debug.Log($"[VRAttackDebugger] 컴포넌트 찾기 결과:");
-        Debug.Log($"  - VRPlayerHealth: {(vrPlayerHealth != null ? "✅" : "❌")}");
-        Debug.Log($"  - VRPostProcessingManager: {(postProcessingManager != null ? "✅" : "❌")}");
-        Debug.Log($"  - OVRCameraRig: {(cameraRig != null ? "✅" : "❌")}");
+        Debug.Log($"  - VRPlayerHealth: {(vrPlayerHealth != null ? "OK" : "MISSING")}");
+        Debug.Log($"  - VRPostProcessingManager: {(postProcessingManager != null ? "OK" : "MISSING")}");
+        Debug.Log($"  - OVRCameraRig: {(cameraRig != null ? "OK" : "MISSING")}");
     }
     
     /// <summary>
-    /// Unity 6 New Input System 설정
+    /// Unity 6 New Input System 설정 (T키만)
     /// </summary>
     void SetupInputSystem()
     {
@@ -87,11 +87,11 @@ public class VRAttackDebugger : MonoBehaviour
         testDamageAction.performed += OnTestDamagePerformed;
         testDamageAction.Enable();
         
-        Debug.Log("[VRAttackDebugger] ✅ New Input System 설정 완료! [T] 키로 테스트 가능");
+        Debug.Log("[VRAttackDebugger] New Input System 설정 완료! [T] 키로 테스트 가능");
     }
     
     /// <summary>
-    /// New Input System 콜백
+    /// T키 콜백
     /// </summary>
     void OnTestDamagePerformed(InputAction.CallbackContext context)
     {
@@ -153,7 +153,9 @@ public class VRAttackDebugger : MonoBehaviour
         {
             debugInfo += "[Player Health]\n";
             debugInfo += $"  Current Health: {vrPlayerHealth.currentHealth:F1}/{vrPlayerHealth.maxHealth}\n";
-            debugInfo += $"  Invincible: {(Time.time - lastDamageTime < vrPlayerHealth.invincibilityDuration ? "YES" : "NO")}\n\n";
+            debugInfo += $"  Health Percentage: {vrPlayerHealth.HealthPercentage:P1}\n";
+            debugInfo += $"  Invincible: {(vrPlayerHealth.IsInvincible ? "YES" : "NO")}\n";
+            debugInfo += $"  Is Dead: {(vrPlayerHealth.IsDead ? "YES" : "NO")}\n\n";
         }
         
         // 3. Post Processing 상태
@@ -181,28 +183,27 @@ public class VRAttackDebugger : MonoBehaviour
         
         // 6. 테스트 가이드
         debugInfo += "[Test Methods]\n";
-        debugInfo += "  [T] Key = Force Damage Test (New Input System)\n";
-        debugInfo += "  [G] Key = Enemy Force Attack (Legacy Input)\n";
+        debugInfo += "  [T] Key = VR Damage Effect Test\n";
         debugInfo += "  Inspector 'Test VR Damage Effect' Button\n";
-        debugInfo += "  Enemy Approach + Attack1 Animation\n";
+        debugInfo += "  Enemy Approach + Attack1 Animation (Auto)\n";
     }
     
     /// <summary>
-    /// 즉시 데미지 테스트 (최적화된 버전)
+    /// VR 피격 효과 테스트
     /// </summary>
     public void TestDamageEffect()
     {
-        Debug.Log("=== VR 피격 효과 즉시 테스트 시작 ===");
+        Debug.Log("=== VR 피격 효과 테스트 시작 ===");
         
         if (vrPlayerHealth != null)
         {
-            Debug.Log($"[VRAttackDebugger] ✅ VRPlayerHealth 발견: {vrPlayerHealth.name}");
-            Debug.Log($"[VRAttackDebugger] ⚡ 즉시 피격 테스트 실행! (데미지: {testDamageAmount})");
+            Debug.Log($"[VRAttackDebugger] VRPlayerHealth 발견: {vrPlayerHealth.name}");
+            Debug.Log($"[VRAttackDebugger] 피격 테스트 실행! (데미지: {testDamageAmount})");
             
             // 현재 체력 상태 로그
             Debug.Log($"[VRAttackDebugger] 피격 전 체력: {vrPlayerHealth.currentHealth}/{vrPlayerHealth.maxHealth}");
             
-            // 즉시 데미지 적용
+            // 데미지 적용
             vrPlayerHealth.TakeDamage(testDamageAmount);
             lastDamageTime = Time.time;
             damageCount++;
@@ -213,25 +214,25 @@ public class VRAttackDebugger : MonoBehaviour
             // Post Processing Manager 상태 확인
             if (postProcessingManager != null)
             {
-                Debug.Log($"[VRAttackDebugger] ✅ VRPostProcessingManager 활성: {postProcessingManager.enabled}");
+                Debug.Log($"[VRAttackDebugger] VRPostProcessingManager 활성: {postProcessingManager.enabled}");
                 Debug.Log($"[VRAttackDebugger] 현재 효과 상태: {postProcessingManager.CurrentState}");
             }
             else
             {
-                Debug.LogWarning("[VRAttackDebugger] ❌ VRPostProcessingManager를 찾을 수 없음!");
+                Debug.LogWarning("[VRAttackDebugger] VRPostProcessingManager를 찾을 수 없음!");
             }
             
-            Debug.Log("[VRAttackDebugger] ✅ 즉시 피격 효과 적용 완료!");
+            Debug.Log("[VRAttackDebugger] 피격 효과 적용 완료!");
         }
         else
         {
-            Debug.LogError("[VRAttackDebugger] ❌ VRPlayerHealth를 찾을 수 없어서 테스트 불가!");
+            Debug.LogError("[VRAttackDebugger] VRPlayerHealth를 찾을 수 없어서 테스트 불가!");
             
             // 다시 찾기 시도
             vrPlayerHealth = FindFirstObjectByType<VRPlayerHealth>();
             if (vrPlayerHealth != null)
             {
-                Debug.Log("[VRAttackDebugger] ✅ VRPlayerHealth를 다시 찾았음! 즉시 테스트 실행!");
+                Debug.Log("[VRAttackDebugger] VRPlayerHealth를 다시 찾았음! 테스트 실행!");
                 vrPlayerHealth.TakeDamage(testDamageAmount);
                 lastDamageTime = Time.time;
                 damageCount++;
@@ -241,13 +242,13 @@ public class VRAttackDebugger : MonoBehaviour
                 // 대안으로 직접 Post Processing 효과 테스트
                 if (postProcessingManager != null)
                 {
-                    Debug.Log("[VRAttackDebugger] 🔄 대안: 직접 VR 피격 효과 호출");
+                    Debug.Log("[VRAttackDebugger] 대안: 직접 VR 피격 효과 호출");
                     postProcessingManager.TriggerInstantDamageFlash();
                 }
             }
         }
         
-        Debug.Log("=== VR 피격 효과 즉시 테스트 완료 ===");
+        Debug.Log("=== VR 피격 효과 테스트 완료 ===");
     }
     
     /// <summary>
@@ -297,7 +298,7 @@ public class VRAttackDebuggerEditor : UnityEditor.Editor
         
         if (Application.isPlaying)
         {
-            UnityEditor.EditorGUILayout.HelpBox("Play Mode: Use button above to test!", UnityEditor.MessageType.Info);
+            UnityEditor.EditorGUILayout.HelpBox("Play Mode: T키 또는 위 버튼으로 테스트!", UnityEditor.MessageType.Info);
         }
         else
         {
