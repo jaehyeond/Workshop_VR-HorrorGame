@@ -280,6 +280,27 @@ public class VRPlayerHealth : MonoBehaviour
     }
     
     /// <summary>
+    /// 리스폰 시에만 사용하는 완전 회복 (죽은 상태에서도 가능)
+    /// </summary>
+    public void RespawnWithFullHealth()
+    {
+        // 체력 완전 회복
+        currentHealth = maxHealth;
+        
+        // 화면 효과 완전 정상화
+        var postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
+        if (postProcessingManager != null)
+        {
+            postProcessingManager.ResetToNormalState();
+        }
+        
+        // 이벤트 발생
+        OnHealthChanged?.Invoke(1f); // 100% 체력
+        
+        Debug.Log($"[VRPlayerHealth] 리스폰으로 완전 회복! {currentHealth}/{maxHealth}");
+    }
+    
+    /// <summary>
     /// 디버그용 프로퍼티들
     /// </summary>
     public bool IsDead => currentHealth <= 0;

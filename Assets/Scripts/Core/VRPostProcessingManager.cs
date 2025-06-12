@@ -220,7 +220,7 @@ public class VRPostProcessingManager : MonoBehaviour
     /// <summary>
     /// 정상 상태로 초기화
     /// </summary>
-    private void ResetToNormalState()
+    public void ResetToNormalState()
     {
         currentState = EffectState.Normal;
         currentIntensity = 0f;

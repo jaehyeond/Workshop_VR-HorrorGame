@@ -16,11 +16,11 @@ public class GameOverManager : MonoBehaviour
     [Tooltip("Game Over 제목 텍스트")]
     public TextMeshProUGUI gameOverTitle;
     
-    [Tooltip("리스폰 버튼")]
-    public Button respawnButton;
+    [Tooltip("계속하기 버튼 (빠른 부활)")]
+    public Button continueButton;
     
-    [Tooltip("재시작 버튼 (씬 재로드)")]
-    public Button restartButton;
+    [Tooltip("포기하기 버튼 (처음부터 다시)")]
+    public Button giveUpButton;
     
     [Header("타이밍 설정")]
     [Tooltip("Game Over UI 표시까지의 딜레이 (초)")]
@@ -47,6 +47,7 @@ public class GameOverManager : MonoBehaviour
     private PlayerSpawnManager spawnManager;
     private Camera playerCamera;
     private CanvasGroup canvasGroup;
+    private VRUIRayController vrRayController;
     
     // 상태
     private bool isGameOver = false;
@@ -132,6 +133,9 @@ public class GameOverManager : MonoBehaviour
                 canvasGroup = gameOverCanvas.gameObject.AddComponent<CanvasGroup>();
             }
         }
+        
+        // VR UI Ray Controller 찾기
+        FindVRRayController();
     }
     
     /// <summary>
@@ -173,6 +177,40 @@ public class GameOverManager : MonoBehaviour
     }
     
     /// <summary>
+    /// VR UI Ray Controller 찾기 및 설정
+    /// </summary>
+    void FindVRRayController()
+    {
+        // 기존 VRUIRayController 찾기
+        vrRayController = FindFirstObjectByType<VRUIRayController>();
+        
+        if (vrRayController == null)
+        {
+            // 자동으로 생성하기 (왼손 컨트롤러에 추가)
+            GameObject leftHandAnchor = GameObject.Find("LeftHandAnchor");
+            if (leftHandAnchor != null)
+            {
+                vrRayController = leftHandAnchor.AddComponent<VRUIRayController>();
+                Debug.Log("[GameOverManager] VRUIRayController를 LeftHandAnchor에 자동 추가했습니다!");
+            }
+            else
+            {
+                // 빈 GameObject에 생성
+                GameObject rayControllerObject = new GameObject("VR UI Ray Controller");
+                vrRayController = rayControllerObject.AddComponent<VRUIRayController>();
+                Debug.LogWarning("[GameOverManager] LeftHandAnchor를 찾을 수 없어 새 GameObject에 VRUIRayController를 생성했습니다!");
+            }
+        }
+        
+        // 초기에는 비활성화 (Game Over 상황에서만 활성화)
+        if (vrRayController != null)
+        {
+            vrRayController.SetRayEnabled(false);
+            Debug.Log("[GameOverManager] VRUIRayController 초기화 완료 (비활성화 상태)");
+        }
+    }
+    
+    /// <summary>
     /// UI 초기화
     /// </summary>
     void InitializeUI()
@@ -197,14 +235,14 @@ public class GameOverManager : MonoBehaviour
     /// </summary>
     void SetupButtonEvents()
     {
-        if (respawnButton != null)
+        if (continueButton != null)
         {
-            respawnButton.onClick.AddListener(OnRespawnButtonClicked);
+            continueButton.onClick.AddListener(OnContinueButtonClicked);
         }
         
-        if (restartButton != null)
+        if (giveUpButton != null)
         {
-            restartButton.onClick.AddListener(OnRestartButtonClicked);
+            giveUpButton.onClick.AddListener(OnGiveUpButtonClicked);
         }
     }
     
@@ -253,6 +291,13 @@ public class GameOverManager : MonoBehaviour
         
         Debug.Log("[GameOverManager] Game Over UI 표시");
         
+        // VR Ray Controller 활성화
+        if (vrRayController != null)
+        {
+            vrRayController.SetRayEnabled(true);
+            Debug.Log("[GameOverManager] VR UI Ray Controller 활성화됨");
+        }
+        
         // UI 활성화
         if (gameOverCanvas != null)
         {
@@ -271,11 +316,11 @@ public class GameOverManager : MonoBehaviour
         // 자동 회복 시스템 비활성화
         DisableAutoRecovery();
         
-        // 자동 리스폰 시작 (설정된 경우)
-        if (autoRespawnTime > 0)
-        {
-            autoRespawnCoroutine = StartCoroutine(AutoRespawnCountdown());
-        }
+                 // 자동 계속하기 시작 (설정된 경우)
+         if (autoRespawnTime > 0)
+         {
+             autoRespawnCoroutine = StartCoroutine(AutoContinueCountdown());
+         }
         
         // 이벤트 발생
         OnGameOverStarted?.Invoke();
@@ -291,6 +336,13 @@ public class GameOverManager : MonoBehaviour
         isGameOver = false;
         
         Debug.Log("[GameOverManager] Game Over UI 숨김");
+        
+        // VR Ray Controller 비활성화
+        if (vrRayController != null)
+        {
+            vrRayController.SetRayEnabled(false);
+            Debug.Log("[GameOverManager] VR UI Ray Controller 비활성화됨");
+        }
         
         // 자동 리스폰 중단
         if (autoRespawnCoroutine != null)
@@ -380,62 +432,83 @@ public class GameOverManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 자동 리스폰 카운트다운
+    /// 자동 계속하기 카운트다운
     /// </summary>
-    IEnumerator AutoRespawnCountdown()
+    IEnumerator AutoContinueCountdown()
     {
         yield return new WaitForSeconds(autoRespawnTime);
         
-        Debug.Log("[GameOverManager] 자동 리스폰 실행");
-        RespawnPlayer();
+        Debug.Log("[GameOverManager] 자동 계속하기 실행");
+        ContinueGame();
     }
     
     /// <summary>
-    /// 리스폰 버튼 클릭
+    /// 계속하기 버튼 클릭 (빠른 부활)
     /// </summary>
-    void OnRespawnButtonClicked()
+    void OnContinueButtonClicked()
     {
-        Debug.Log("[GameOverManager] 리스폰 버튼 클릭됨");
-        RespawnPlayer();
+        Debug.Log("[GameOverManager] 계속하기 버튼 클릭됨 - 빠른 부활");
+        ContinueGame();
     }
     
     /// <summary>
-    /// 재시작 버튼 클릭
+    /// 포기하기 버튼 클릭 (완전 재시작)
     /// </summary>
-    void OnRestartButtonClicked()
+    void OnGiveUpButtonClicked()
     {
-        Debug.Log("[GameOverManager] 재시작 버튼 클릭됨");
-        RestartScene();
+        Debug.Log("[GameOverManager] 포기하기 버튼 클릭됨 - 완전 재시작");
+        GiveUpGame();
     }
     
     /// <summary>
-    /// 플레이어 리스폰 실행
+    /// 게임 계속하기 (빠른 부활 - 현재 위치에서)
     /// </summary>
-    public void RespawnPlayer()
+    public void ContinueGame()
     {
-        if (spawnManager == null)
-        {
-            Debug.LogError("[GameOverManager] PlayerSpawnManager가 없습니다!");
-            return;
-        }
-        
-        // 플레이어 위치 리셋
-        spawnManager.RespawnPlayer();
-        
-        // 체력 회복
+        // 현재 위치에서 체력만 회복하고 계속
         if (playerHealth != null)
         {
-            playerHealth.Heal(playerHealth.maxHealth); // 완전 회복
+            playerHealth.RespawnWithFullHealth(); // 리스폰 전용 완전 회복
         }
         
         // Game Over UI 숨김
         HideGameOver();
         
-        Debug.Log("[GameOverManager] 플레이어 리스폰 완료!");
+        Debug.Log("[GameOverManager] 게임 계속 - 현재 위치에서 부활!");
     }
     
     /// <summary>
-    /// 씬 재시작
+    /// 게임 포기 (처음부터 다시 시작)
+    /// </summary>
+    public void GiveUpGame()
+    {
+        if (spawnManager == null)
+        {
+            Debug.LogError("[GameOverManager] PlayerSpawnManager가 없습니다! 씬 재로드로 대체");
+            RestartScene();
+            return;
+        }
+        
+        // 플레이어를 시작 위치로 이동
+        spawnManager.RespawnPlayer();
+        
+        // 체력 완전 회복
+        if (playerHealth != null)
+        {
+            playerHealth.RespawnWithFullHealth(); // 리스폰 전용 완전 회복
+        }
+        
+        // 적들 리셋 (옵션 - 필요시 추가)
+        ResetEnemies();
+        
+        // Game Over UI 숨김
+        HideGameOver();
+        
+        Debug.Log("[GameOverManager] 게임 포기 - 처음부터 다시 시작!");
+    }
+    
+    /// <summary>
+    /// 씬 재시작 (백업 방법)
     /// </summary>
     public void RestartScene()
     {
@@ -443,6 +516,16 @@ public class GameOverManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
         );
+    }
+    
+    /// <summary>
+    /// 적들 리셋 (옵션)
+    /// </summary>
+    void ResetEnemies()
+    {
+        // CultistManager나 EnemyManager를 통해 적들을 초기 상태로 리셋
+        // 필요에 따라 구현
+        Debug.Log("[GameOverManager] 적들 상태 리셋");
     }
     
     /// <summary>
