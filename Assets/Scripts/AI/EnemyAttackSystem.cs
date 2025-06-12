@@ -8,7 +8,7 @@ public class EnemyAttackSystem : MonoBehaviour
 {
     [Header("공격 설정")]
     public float attackDamage = 25f;
-    public float attackRange = 2.5f;
+    public float attackRange = 5.0f; // 공격 범위 확대
     public LayerMask playerLayer = -1;
     
     [Header("공격 감지")]
@@ -94,7 +94,7 @@ public class EnemyAttackSystem : MonoBehaviour
     /// </summary>
     public void OnAttack1Hit()
     {
-        if (enableDebug) Debug.Log($"[EnemyAttackSystem] 🗡️ Attack1 타격 실행!");
+        Debug.Log($"[EnemyAttackSystem] 🗡️ Attack1 타격 실행! (Enemy: {gameObject.name})");
         
         PerformAttack();
     }
@@ -113,10 +113,8 @@ public class EnemyAttackSystem : MonoBehaviour
         Vector3 attackPosition = attackPoint != null ? attackPoint.position : transform.position;
         float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
         
-        if (enableDebug)
-        {
-            Debug.Log($"[EnemyAttackSystem] 공격 거리 체크: {distanceToPlayer:F2}m (최대: {attackRange}m)");
-        }
+        Debug.Log($"[EnemyAttackSystem] 공격 거리 체크: {distanceToPlayer:F2}m (최대: {attackRange}m)");
+        Debug.Log($"[EnemyAttackSystem] 플레이어 위치: {player.position}, Enemy 위치: {attackPosition}");
         
         // 거리 체크
         if (distanceToPlayer <= attackRange)
@@ -266,5 +264,55 @@ public class EnemyAttackSystem : MonoBehaviour
         {
             debugFunctions.TestAttack(this);
         }
+        
+        // 강제 공격 테스트 (F2 키) - New Input System 사용
+        #if ENABLE_LEGACY_INPUT_MANAGER
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            Debug.Log("[EnemyAttackSystem] 🔥 F2 키로 강제 공격 테스트!");
+            ForceAttackTest();
+        }
+        #endif
+        
+        // 애니메이션 이벤트 없이 강제 공격 (G키)
+        #if ENABLE_LEGACY_INPUT_MANAGER
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            Debug.Log("[EnemyAttackSystem] 🔥 G키로 애니메이션 이벤트 우회 공격!");
+            OnAttack1Hit(); // 직접 호출
+        }
+        #endif
+        
+        // 더 간단한 테스트 (H키) - 거리 무시하고 즉시 공격
+        #if ENABLE_LEGACY_INPUT_MANAGER
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            Debug.Log("[EnemyAttackSystem] 🔥 H키로 즉시 공격 (거리 무시)!");
+            if (playerHealth != null)
+            {
+                Debug.Log("[EnemyAttackSystem] ✅ 플레이어에게 즉시 데미지!");
+                playerHealth.TakeDamage(attackDamage);
+            }
+            else
+            {
+                Debug.LogError("[EnemyAttackSystem] ❌ VRPlayerHealth를 찾을 수 없음!");
+            }
+        }
+        #endif
+    }
+    
+    /// <summary>
+    /// 거리 무시하고 강제로 공격 테스트
+    /// </summary>
+    public void ForceAttackTest()
+    {
+        if (playerHealth == null)
+        {
+            Debug.LogError("[EnemyAttackSystem] ❌ VRPlayerHealth를 찾을 수 없습니다!");
+            return;
+        }
+        
+        Debug.Log("[EnemyAttackSystem] 🔥 강제 공격 실행!");
+        playerHealth.TakeDamage(attackDamage);
     }
 } 

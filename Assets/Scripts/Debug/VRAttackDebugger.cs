@@ -171,9 +171,18 @@ public class VRAttackDebugger : MonoBehaviour
         debugInfo += $"  Total Damage Count: {damageCount}\n";
         debugInfo += $"  Last Damage: {(lastDamageTime > 0 ? $"{Time.time - lastDamageTime:F1}s ago" : "None")}\n\n";
         
-        // 5. 테스트 가이드
+        // 5. Scene 설정 확인
+        debugInfo += "[Scene Setup Check]\n";
+        var enemies = FindObjectsByType<EnemyAttackSystem>(FindObjectsSortMode.None);
+        debugInfo += $"  Enemies with AttackSystem: {enemies.Length}\n";
+        var globalVolumes = FindObjectsByType<UnityEngine.Rendering.Volume>(FindObjectsSortMode.None);
+        debugInfo += $"  Global Volumes in Scene: {globalVolumes.Length}\n";
+        debugInfo += $"  Player GameObject: {(vrPlayerHealth != null ? vrPlayerHealth.gameObject.name : "NONE")}\n\n";
+        
+        // 6. 테스트 가이드
         debugInfo += "[Test Methods]\n";
         debugInfo += "  [T] Key = Force Damage Test (New Input System)\n";
+        debugInfo += "  [G] Key = Enemy Force Attack (Legacy Input)\n";
         debugInfo += "  Inspector 'Test VR Damage Effect' Button\n";
         debugInfo += "  Enemy Approach + Attack1 Animation\n";
     }
