@@ -2246,6 +2246,7 @@ GameObject:
   - component: {fileID: 6541579212741086833}
   - component: {fileID: 3843887813060294282}
   - component: {fileID: 4459756456133090709}
+  - component: {fileID: 2449243477442248321}
   m_Layer: 13
   m_Name: Fanatic Enemy
   m_TagString: Untagged
@@ -2401,6 +2402,30 @@ MonoBehaviour:
   idleObservationTime: 0.1
   attackCooldown: 2
   pathRecalculationTime: 0.5
+--- !u!114 &2449243477442248321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8360190689919936944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80104af22223c2a408982260cd41f90c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDamage: 25
+  attackRange: 2.5
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attackPoint: {fileID: 6150226872085465493}
+  useHandAsAttackPoint: 1
+  attackSound: {fileID: 0}
+  attackEffect: {fileID: 0}
+  enableDebug: 1
+  debugFunctions:
+    testAttack: 0
 --- !u!1 &8679501869122230524
 GameObject:
   m_ObjectHideFlags: 0

@@ -190,6 +190,7 @@ GameObject:
   - component: {fileID: 8103409906984192631}
   - component: {fileID: 8001114778008634466}
   - component: {fileID: 7943220339781123154}
+  - component: {fileID: 2940112893727063458}
   m_Layer: 0
   m_Name: Main Boss
   m_TagString: Untagged
@@ -329,6 +330,30 @@ MonoBehaviour:
   hitStunDuration: 1
   prayingSpot: {fileID: 0}
   enableDebugLogs: 1
+--- !u!114 &2940112893727063458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2089823997309480700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80104af22223c2a408982260cd41f90c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDamage: 25
+  attackRange: 2.5
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attackPoint: {fileID: 5356910194676369349}
+  useHandAsAttackPoint: 1
+  attackSound: {fileID: 0}
+  attackEffect: {fileID: 0}
+  enableDebug: 1
+  debugFunctions:
+    testAttack: 0
 --- !u!1 &3119655098292668732
 GameObject:
   m_ObjectHideFlags: 0

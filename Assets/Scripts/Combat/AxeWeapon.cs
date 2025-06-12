@@ -185,14 +185,14 @@ public class AxeWeapon : MonoBehaviour
         // 장착/해제 버튼 확인
         if (OVRInput.GetDown(equipButton, controllerType))
         {
-            Debug.Log("[AxeWeapon] A버튼 눌림 감지!");
+            //Debug.Log("[AxeWeapon] A버튼 눌림 감지!");
             ToggleEquip();
         }
 
         // 공격 버튼 확인 (장착된 상태에서만)
         if (isEquipped && OVRInput.GetDown(attackButton, controllerType))
         {
-            Debug.Log("[AxeWeapon] 공격 버튼 눌림!");
+            //Debug.Log("[AxeWeapon] 공격 버튼 눌림!");
             Attack();
         }
         
@@ -215,7 +215,7 @@ public class AxeWeapon : MonoBehaviour
     {
         if (handAnchor == null)
         {
-            Debug.LogError("[AxeWeapon] Hand Anchor가 설정되지 않았습니다!");
+            //Debug.LogError("[AxeWeapon] Hand Anchor가 설정되지 않았습니다!");
             return;
         }
 
@@ -245,7 +245,7 @@ public class AxeWeapon : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[AxeWeapon] AttachPoint가 없어서 기본 방식 사용");
+            //Debug.LogWarning("[AxeWeapon] AttachPoint가 없어서 기본 방식 사용");
             
             // AttachPoint가 없으면 기존 방식
             transform.SetParent(handAnchor);
@@ -348,7 +348,7 @@ public class AxeWeapon : MonoBehaviour
         {
             GameObject obj = hitColliders[i].gameObject;
             CultistAI cultist = obj.GetComponent<CultistAI>();
-            Debug.Log($"[AxeWeapon] 감지된 오브젝트 {i}: {obj.name}, 레이어: {obj.layer}, CultistAI: {(cultist != null ? "있음" : "없음")}");
+            //Debug.Log($"[AxeWeapon] 감지된 오브젝트 {i}: {obj.name}, 레이어: {obj.layer}, CultistAI: {(cultist != null ? "있음" : "없음")}");
         }
         
         foreach (Collider hitCollider in hitColliders)
@@ -359,16 +359,16 @@ public class AxeWeapon : MonoBehaviour
             CultistAI cultist = hitCollider.GetComponent<CultistAI>();
             if (cultist != null)
             {
-                Debug.Log($"[AxeWeapon] ===== 광신도 발견: {cultist.name} =====");
-                Debug.Log($"[AxeWeapon] HitCultist 호출 전!");
+                // Debug.Log($"[AxeWeapon] ===== 광신도 발견: {cultist.name} =====");
+                // Debug.Log($"[AxeWeapon] HitCultist 호출 전!");
                 HitCultist(cultist, swingSpeed);
-                Debug.Log($"[AxeWeapon] HitCultist 호출 후!");
+                //Debug.Log($"[AxeWeapon] HitCultist 호출 후!");
                 lastAttackTime = Time.time;
                 break; // 한 번에 하나씩만 타격
             }
             else
             {
-                Debug.Log($"[AxeWeapon] {hitCollider.name}에는 CultistAI 컴포넌트가 없음");
+                //Debug.Log($"[AxeWeapon] {hitCollider.name}에는 CultistAI 컴포넌트가 없음");
             }
         }
         
@@ -390,12 +390,12 @@ public class AxeWeapon : MonoBehaviour
             finalDamage *= 1.5f; // 치명타는 1.5배 데미지
         }
         
-        Debug.Log($"[AxeWeapon] 최종 데미지: {finalDamage}, TakeDamage 호출 전!");
+        //Debug.Log($"[AxeWeapon] 최종 데미지: {finalDamage}, TakeDamage 호출 전!");
         
         // 광신도에게 데미지 전달
         cultist.TakeDamage(finalDamage, transform.position);
         
-        Debug.Log($"[AxeWeapon] TakeDamage 호출 완료!");
+        //Debug.Log($"[AxeWeapon] TakeDamage 호출 완료!");
         
         // 기본 효과 재생
         PlayHitEffects(isCriticalHit);
@@ -404,7 +404,7 @@ public class AxeWeapon : MonoBehaviour
         TriggerHapticFeedback(isCriticalHit);
         
         string hitType = isCriticalHit ? "치명타" : "일반 타격";
-        Debug.Log($"[AxeWeapon] {cultist.name}에게 {hitType}! 데미지: {finalDamage}");
+        //Debug.Log($"[AxeWeapon] {cultist.name}에게 {hitType}! 데미지: {finalDamage}");
     }
     
     private void PlayHitEffects(bool isCriticalHit)

@@ -397,6 +397,7 @@ GameObject:
   - component: {fileID: 2013949236404158792}
   - component: {fileID: 8678277044387754105}
   - component: {fileID: 87572015264358247}
+  - component: {fileID: 633269879046054343}
   m_Layer: 13
   m_Name: Facture
   m_TagString: Untagged
@@ -536,6 +537,30 @@ MonoBehaviour:
   hitStunDuration: 1
   prayingSpot: {fileID: 0}
   enableDebugLogs: 1
+--- !u!114 &633269879046054343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4214145446479870346}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80104af22223c2a408982260cd41f90c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDamage: 25
+  attackRange: 2.5
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attackPoint: {fileID: 6934152311769520065}
+  useHandAsAttackPoint: 1
+  attackSound: {fileID: 0}
+  attackEffect: {fileID: 0}
+  enableDebug: 1
+  debugFunctions:
+    testAttack: 0
 --- !u!1 &4796261780609801946
 GameObject:
   m_ObjectHideFlags: 0
