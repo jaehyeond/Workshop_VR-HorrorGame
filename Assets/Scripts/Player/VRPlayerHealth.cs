@@ -63,21 +63,35 @@ public class VRPlayerHealth : MonoBehaviour
     /// </summary>
     public void TakeDamage(float damage)
     {
-        if (isInvincible || currentHealth <= 0) return;
+        Debug.Log($"[VRPlayerHealth] 🔥 TakeDamage 호출됨! 데미지: {damage}");
+        
+        if (isInvincible)
+        {
+            Debug.Log("[VRPlayerHealth] ⚠️ 무적 상태라서 데미지 무시");
+            return;
+        }
+        
+        if (currentHealth <= 0)
+        {
+            Debug.Log("[VRPlayerHealth] ⚠️ 이미 죽은 상태라서 데미지 무시");
+            return;
+        }
         
         // 데미지 적용
         currentHealth = Mathf.Max(0, currentHealth - damage);
         
-        Debug.Log($"[VRPlayerHealth] 플레이어가 {damage} 데미지를 받았습니다! 현재 체력: {currentHealth}/{maxHealth}");
+        Debug.Log($"[VRPlayerHealth] ✅ 플레이어가 {damage} 데미지를 받았습니다! 현재 체력: {currentHealth}/{maxHealth}");
         
         // 이벤트 발생
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
         OnPlayerDamaged?.Invoke();
         
         // VR 피격 효과 (빨간 화면)
+        Debug.Log("[VRPlayerHealth] 🔴 VR 피격 효과 시작!");
         StartCoroutine(DamageScreenEffect());
         
         // 햅틱 피드백
+        Debug.Log("[VRPlayerHealth] 📳 햅틱 피드백 시작!");
         TriggerDamageHaptics();
         
         // 무적 시간 적용
@@ -100,13 +114,26 @@ public class VRPlayerHealth : MonoBehaviour
     /// </summary>
     private IEnumerator DamageScreenEffect()
     {
+        Debug.Log("[VRPlayerHealth] 🔴 DamageScreenEffect 시작!");
+        
         if (postProcessingManager == null) 
         {
-            Debug.LogWarning("[VRPlayerHealth] ❌ VRPostProcessingManager를 찾을 수 없음!");
-            yield break;
+            Debug.LogError("[VRPlayerHealth] ❌ VRPostProcessingManager를 찾을 수 없음!");
+            
+            // 다시 찾기 시도
+            postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
+            if (postProcessingManager == null)
+            {
+                Debug.LogError("[VRPlayerHealth] ❌ VRPostProcessingManager를 다시 찾아도 없음!");
+                yield break;
+            }
+            else
+            {
+                Debug.Log("[VRPlayerHealth] ✅ VRPostProcessingManager를 다시 찾았음!");
+            }
         }
         
-        Debug.Log("[VRPlayerHealth] 🔴 VR 피격 효과 시작!");
+        Debug.Log($"[VRPlayerHealth] VRPostProcessingManager 호출: intensity={damageScreenIntensity}, duration={damageEffectDuration}");
         
         // 새로운 VR 전용 피격 효과 사용 (더 강력한 빨간 화면)
         postProcessingManager.TriggerVRDamageEffect(damageScreenIntensity, damageEffectDuration);

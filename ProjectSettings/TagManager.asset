@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 3
   tags:
   - SamplesInfoPanel
+  - EnemyAttackPoint
+  - Player
+  - Enemy
+  - VRPlayer
   layers:
   - Default
   - TransparentFX

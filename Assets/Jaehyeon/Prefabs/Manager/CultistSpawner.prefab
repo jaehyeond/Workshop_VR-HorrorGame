@@ -74,5 +74,6 @@ MonoBehaviour:
   attackSound: {fileID: 0}
   attackEffect: {fileID: 0}
   enableDebug: 1
+  skipLineOfSightCheck: 0
   debugFunctions:
     testAttack: 0

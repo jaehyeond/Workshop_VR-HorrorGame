@@ -106,7 +106,19 @@ public class VRHorrorGameSetup : EditorWindow
             success = false;
         }
         
-        // 4. Input System 확인
+        // 4. 필수 태그 설정
+        if (!SetupRequiredTags())
+        {
+            success = false;
+        }
+        
+        // 5. Player Hit Target 설정
+        if (!SetupPlayerHitTarget())
+        {
+            success = false;
+        }
+        
+        // 6. Input System 확인
         CheckInputSystemSettings();
         
         if (success)
@@ -116,9 +128,10 @@ public class VRHorrorGameSetup : EditorWindow
                 "✅ VRPostProcessingManager 설정 완료 (Post Processing 기반)\n" +
                 "✅ VRPlayerHealth 추가 완료\n" +
                 "✅ Enemy Attack Points 설정 완료\n" +
+                "✅ VRPlayerHitTarget 설정 완료 (물리적 타격 감지)\n" +
                 "✅ Global Volume 및 Post Processing 환경 구성 완료\n" +
                 "✅ Input System 확인 완료\n\n" +
-                "이제 [T] 키로 VR 피격 효과를 테스트할 수 있습니다!", "확인");
+                "이제 Enemy가 Attack1으로 공격할 때 VR 화면이 빨갛게 변합니다!", "확인");
         }
         else
         {
@@ -348,6 +361,13 @@ public class VRHorrorGameSetup : EditorWindow
     {
         if (enemy.attackPoint != null) return;
         
+        // Spawner는 제외 (실제 Enemy가 아님)
+        if (IsSpawner(enemy.gameObject))
+        {
+            Debug.Log($"[VRHorrorGameSetup] ⏭️ {enemy.name}은 Spawner이므로 Attack Point 설정 건너뜀");
+            return;
+        }
+        
         Transform enemyTransform = enemy.transform;
         
         // 손 위치 찾기 (여러 가능한 이름들)
@@ -366,6 +386,16 @@ public class VRHorrorGameSetup : EditorWindow
         if (rightHand != null)
         {
             enemy.attackPoint = rightHand;
+            
+            // Attack Point에 태그와 Collider 추가
+            if (rightHand.gameObject.GetComponent<Collider>() == null)
+            {
+                SphereCollider attackCollider = rightHand.gameObject.AddComponent<SphereCollider>();
+                attackCollider.radius = 0.1f;
+                attackCollider.isTrigger = true;
+            }
+            rightHand.gameObject.tag = "EnemyAttackPoint";
+            
             Debug.Log($"[VRHorrorGameSetup] ✅ {enemy.name}의 Attack Point를 {rightHand.name}으로 설정");
         }
         else
@@ -374,10 +404,28 @@ public class VRHorrorGameSetup : EditorWindow
             GameObject attackPointObj = new GameObject("AttackPoint");
             attackPointObj.transform.SetParent(enemyTransform);
             attackPointObj.transform.localPosition = Vector3.forward * 1f;
+            
+            // Attack Point Collider 및 태그 설정
+            SphereCollider attackCollider = attackPointObj.AddComponent<SphereCollider>();
+            attackCollider.radius = 0.1f;
+            attackCollider.isTrigger = true;
+            attackPointObj.tag = "EnemyAttackPoint";
+            
             enemy.attackPoint = attackPointObj.transform;
             
             Debug.LogWarning($"[VRHorrorGameSetup] ⚠️ {enemy.name}의 손을 찾지 못해 Attack Point를 앞쪽에 생성");
         }
+    }
+    
+    /// <summary>
+    /// Spawner인지 확인
+    /// </summary>
+    private static bool IsSpawner(GameObject obj)
+    {
+        string name = obj.name.ToLower();
+        return name.Contains("spawner") || 
+               name.Contains("spawn") ||
+               obj.GetComponent<CultistSpawner>() != null;
     }
     
     /// <summary>
@@ -400,6 +448,141 @@ public class VRHorrorGameSetup : EditorWindow
         return null;
     }
 
+    /// <summary>
+    /// 필수 태그들 설정
+    /// </summary>
+    private static bool SetupRequiredTags()
+    {
+        Debug.Log("[VRHorrorGameSetup] 필수 태그 설정 시작...");
+        
+        try
+        {
+            string[] requiredTags = {
+                "EnemyAttackPoint",
+                "Player",
+                "Enemy",
+                "VRPlayer"
+            };
+
+            int createdCount = 0;
+            
+            foreach (string tag in requiredTags)
+            {
+                if (CreateTagIfNotExists(tag))
+                {
+                    createdCount++;
+                    Debug.Log($"[VRHorrorGameSetup] ✅ 태그 생성: {tag}");
+                }
+            }
+            
+            Debug.Log($"[VRHorrorGameSetup] ✅ 태그 설정 완료! 새로 생성: {createdCount}개");
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[VRHorrorGameSetup] ❌ 태그 설정 실패: {e.Message}");
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// 태그가 존재하지 않으면 생성
+    /// </summary>
+    private static bool CreateTagIfNotExists(string tagName)
+    {
+        // 태그가 이미 존재하는지 확인
+        SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+        SerializedProperty tagsProp = tagManager.FindProperty("tags");
+
+        // 기존 태그 확인
+        for (int i = 0; i < tagsProp.arraySize; i++)
+        {
+            SerializedProperty tag = tagsProp.GetArrayElementAtIndex(i);
+            if (tag.stringValue.Equals(tagName))
+            {
+                return false; // 이미 존재
+            }
+        }
+
+        // 새 태그 추가
+        tagsProp.InsertArrayElementAtIndex(tagsProp.arraySize);
+        SerializedProperty newTag = tagsProp.GetArrayElementAtIndex(tagsProp.arraySize - 1);
+        newTag.stringValue = tagName;
+        tagManager.ApplyModifiedProperties();
+
+        return true; // 새로 생성됨
+    }
+    
+    /// <summary>
+    /// VR Player Hit Target 설정 (물리적 타격 감지)
+    /// </summary>
+    private static bool SetupPlayerHitTarget()
+    {
+        Debug.Log("[VRHorrorGameSetup] VRPlayerHitTarget 설정 시작...");
+        
+        try
+        {
+            // Player Controller 찾기 (OVRCameraRig 또는 Player 태그)
+            Transform playerController = null;
+            
+            // 1. Player 태그로 찾기
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                playerController = playerObj.transform;
+                Debug.Log($"[VRHorrorGameSetup] Player 태그로 Player Controller 찾음: {playerObj.name}");
+            }
+            else
+            {
+                // 2. OVRCameraRig로 찾기
+                OVRCameraRig cameraRig = FindFirstObjectByType<OVRCameraRig>();
+                if (cameraRig != null)
+                {
+                    playerController = cameraRig.transform;
+                    Debug.Log($"[VRHorrorGameSetup] OVRCameraRig로 Player Controller 찾음: {cameraRig.name}");
+                }
+            }
+            
+            if (playerController == null)
+            {
+                Debug.LogError("[VRHorrorGameSetup] ❌ Player Controller를 찾을 수 없습니다!");
+                return false;
+            }
+            
+            // 이미 VRPlayerHitTarget이 있는지 확인
+            VRPlayerHitTarget existingHitTarget = playerController.GetComponentInChildren<VRPlayerHitTarget>();
+            if (existingHitTarget != null)
+            {
+                Debug.Log("[VRHorrorGameSetup] ✅ VRPlayerHitTarget이 이미 존재합니다.");
+                return true;
+            }
+            
+            // VRPlayerHitTarget 생성 (Player Controller 하위에)
+            GameObject hitTargetObj = new GameObject("VRPlayerHitTarget");
+            hitTargetObj.transform.SetParent(playerController);
+            hitTargetObj.transform.localPosition = Vector3.zero; // Player Controller 중심에 배치
+            
+            // VRPlayerHitTarget 컴포넌트 추가
+            VRPlayerHitTarget hitTarget = hitTargetObj.AddComponent<VRPlayerHitTarget>();
+            hitTarget.hitRadius = 0.8f; // VR 플레이어 크기에 맞는 반경
+            hitTarget.showDebugGizmos = true;
+            
+            // 태그 설정
+            hitTargetObj.tag = "Player";
+            
+            Debug.Log("[VRHorrorGameSetup] ✅ VRPlayerHitTarget 설정 완료!");
+            Debug.Log($"[VRHorrorGameSetup] - 위치: {playerController.name} 하위");
+            Debug.Log($"[VRHorrorGameSetup] - 타격 반경: {hitTarget.hitRadius}m");
+            
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[VRHorrorGameSetup] ❌ VRPlayerHitTarget 설정 실패: {e.Message}");
+            return false;
+        }
+    }
+    
     /// <summary>
     /// 모든 시스템 상태 확인
     /// </summary>
@@ -427,6 +610,17 @@ public class VRHorrorGameSetup : EditorWindow
         else
         {
             report += "❌ VRPostProcessingManager: 설정 필요\n";
+        }
+
+        // VRPlayerHitTarget 확인
+        VRPlayerHitTarget hitTarget = FindFirstObjectByType<VRPlayerHitTarget>();
+        if (hitTarget != null)
+        {
+            report += "✅ VRPlayerHitTarget: 설정됨 (물리적 타격 감지)\n";
+        }
+        else
+        {
+            report += "❌ VRPlayerHitTarget: 설정 필요 (물리적 타격 감지)\n";
         }
 
         // Enemy Attack Points 확인
@@ -480,6 +674,10 @@ public class VRHorrorGameSetup : EditorWindow
         // VRPostProcessingManager
         bool hasPostManager = FindFirstObjectByType<VRPostProcessingManager>() != null;
         EditorGUILayout.LabelField($"VRPostProcessingManager: {(hasPostManager ? "✅" : "❌")}");
+
+        // VRPlayerHitTarget
+        bool hasHitTarget = FindFirstObjectByType<VRPlayerHitTarget>() != null;
+        EditorGUILayout.LabelField($"VRPlayerHitTarget: {(hasHitTarget ? "✅" : "❌")}");
 
         // Enemy Count
         EnemyAttackSystem[] enemies = FindObjectsByType<EnemyAttackSystem>(FindObjectsSortMode.None);

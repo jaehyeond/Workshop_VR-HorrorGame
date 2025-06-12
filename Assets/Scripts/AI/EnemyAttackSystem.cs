@@ -32,6 +32,10 @@ public class EnemyAttackSystem : MonoBehaviour
     // 플레이어 탐지
     private VRPlayerHealth playerHealth;
     private Transform player;
+    private VRPlayerHitTarget playerHitTarget;
+    
+    // 물리적 타격 감지
+    private bool playerInAttackRange = false;
     
     // New Input System for testing
     private InputAction forceAttackAction;
@@ -83,6 +87,17 @@ public class EnemyAttackSystem : MonoBehaviour
         {
             player = playerHealth.transform;
             Debug.Log($"[EnemyAttackSystem] ✅ 플레이어 찾음: {player.name} (위치: {player.position})");
+            
+            // VRPlayerHitTarget 찾기
+            playerHitTarget = FindFirstObjectByType<VRPlayerHitTarget>();
+            if (playerHitTarget != null)
+            {
+                Debug.Log($"[EnemyAttackSystem] ✅ 플레이어 타격 영역 찾음: {playerHitTarget.name}");
+            }
+            else
+            {
+                Debug.LogWarning("[EnemyAttackSystem] ⚠️ VRPlayerHitTarget를 찾을 수 없습니다!");
+            }
             
             // 거리 확인
             float distance = Vector3.Distance(transform.position, player.position);
@@ -254,7 +269,61 @@ public class EnemyAttackSystem : MonoBehaviour
     {
         Debug.Log($"[EnemyAttackSystem] 🗡️ Attack1 타격 실행! (Enemy: {gameObject.name})");
         
-        PerformAttack();
+        // 즉시 데미지 처리 (물리적 감지 상관없이)
+        if (playerHealth != null)
+        {
+            Vector3 attackPosition = attackPoint != null ? attackPoint.position : transform.position;
+            float distanceToPlayer = Vector3.Distance(attackPosition, player.position);
+            
+            Debug.Log($"[EnemyAttackSystem] 공격 거리: {distanceToPlayer:F2}m (최대: {attackRange}m)");
+            
+            // 거리 체크만 하고 즉시 데미지
+            if (distanceToPlayer <= attackRange)
+            {
+                Debug.Log("[EnemyAttackSystem] ✅ 즉시 데미지 처리!");
+                playerHealth.TakeDamage(attackDamage);
+                PlayAttackEffects(attackPosition);
+            }
+            else
+            {
+                Debug.Log($"[EnemyAttackSystem] ❌ 공격 범위 밖: {distanceToPlayer:F2}m > {attackRange}m");
+            }
+        }
+        else
+        {
+            Debug.LogError("[EnemyAttackSystem] ❌ VRPlayerHealth를 찾을 수 없음!");
+        }
+    }
+    
+    /// <summary>
+    /// VRPlayerHitTarget에서 호출되는 콜백 (플레이어가 공격 범위에 들어왔을 때)
+    /// </summary>
+    public void OnPlayerInAttackRange(bool inRange)
+    {
+        playerInAttackRange = inRange;
+        Debug.Log($"[EnemyAttackSystem] 플레이어 물리적 타격 범위: {(inRange ? "IN" : "OUT")}");
+    }
+    
+    /// <summary>
+    /// 물리적 타격 감지 기반 공격
+    /// </summary>
+    private void PerformPhysicalAttack()
+    {
+        if (playerHitTarget == null || playerHealth == null)
+        {
+            Debug.LogWarning("[EnemyAttackSystem] 물리적 타격 실패 - 대상 없음");
+            return;
+        }
+        
+        Vector3 attackPosition = attackPoint != null ? attackPoint.position : transform.position;
+        
+        // 직접 타격 처리
+        playerHitTarget.TakeDamageFromEnemy(attackDamage, attackPosition);
+        
+        Debug.Log($"[EnemyAttackSystem] ✅ 물리적 타격 성공! 데미지: {attackDamage}");
+        
+        // 공격 이펙트
+        PlayAttackEffects(attackPosition);
     }
     
     /// <summary>
