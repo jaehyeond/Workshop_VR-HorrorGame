@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR
 /// <summary>
@@ -22,125 +23,300 @@ public class MixamoAnimationEventFixer : EditorWindow
 
         EditorGUILayout.HelpBox(
             "Mixamo FBX 파일은 Read-Only라서 직접 수정할 수 없습니다.\n" +
-            "대신 새로운 AnimationClip을 생성하여 Animation Event를 추가합니다.", 
+            "각 보스별 개별 애니메이션을 복사하여 Animation Event를 추가합니다.", 
             MessageType.Info);
 
         GUILayout.Space(15);
 
-        if (GUILayout.Button("Mixamo 공격 애니메이션을 복사하고 Event 추가", GUILayout.Height(40)))
+        if (GUILayout.Button("🎯 모든 보스 공격 애니메이션 복사 및 이벤트 추가", GUILayout.Height(40)))
         {
-            CreateEditableAttackAnimations();
+            CreateAllBossAttackAnimations();
         }
 
         GUILayout.Space(10);
 
-        if (GUILayout.Button("모든 Enemy Animator Controller 업데이트", GUILayout.Height(30)))
+        if (GUILayout.Button("📋 모든 보스 Animator Controller 업데이트", GUILayout.Height(30)))
         {
-            UpdateEnemyAnimatorControllers();
+            UpdateAllBossAnimatorControllers();
         }
 
         GUILayout.Space(15);
 
         EditorGUILayout.HelpBox(
-            "이 도구는:\n" +
-            "1. Standing Melee Attack Downward를 복사하여 수정 가능한 .anim 파일 생성\n" +
-            "2. 새 애니메이션에 OnAttack1Hit Animation Event 추가\n" +
-            "3. 모든 Enemy Animator Controller를 새 애니메이션으로 업데이트", 
+            "🎮 새로운 기능:\n" +
+            "1. 각 보스별 개별 Attack1, Attack2 애니메이션 복사\n" +
+            "2. OnAttack1Hit (데미지) + OnAttackComplete (패턴 전환) 이벤트 추가\n" +
+            "3. 보스별 고유 애니메이션 유지하면서 이벤트만 추가\n" +
+            "4. Attack1 ↔ Attack2 순환 패턴 지원", 
             MessageType.None);
     }
 
     /// <summary>
-    /// Mixamo 공격 애니메이션을 복사하고 Animation Event 추가
+    /// 모든 보스의 공격 애니메이션을 복사하고 Animation Event 추가
+    /// 현재 애니메이터에 설정된 실제 애니메이션을 추출하여 사용
     /// </summary>
-    private void CreateEditableAttackAnimations()
+    private void CreateAllBossAttackAnimations()
     {
-        // Mixamo 애니메이션 찾기
-        string mixamoPath = "Assets/Jaehyeon/Animations/Animation(Player)/Standing Melee Attack Downward.fbx";
-        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(mixamoPath);
-        
-        AnimationClip originalClip = null;
-        
-        // 디버그: FBX 파일 내의 모든 애셋 확인
-        Debug.Log($"[MixamoAnimationEventFixer] FBX 파일 내 애셋들:");
-        foreach (Object asset in assets)
+        // 보스 애니메이터 컨트롤러 경로
+        var bossControllers = new Dictionary<string, string>()
         {
-            Debug.Log($"  - {asset.name} ({asset.GetType().Name})");
-            if (asset is AnimationClip clip)
-            {
-                Debug.Log($"    → AnimationClip 발견: {clip.name}");
-                if (originalClip == null) // 첫 번째 AnimationClip 사용
-                {
-                    originalClip = clip;
-                }
-            }
-        }
-
-        if (originalClip == null)
-        {
-            string assetList = "";
-            foreach (Object asset in assets)
-            {
-                assetList += $"• {asset.name} ({asset.GetType().Name})\n";
-            }
-            
-            EditorUtility.DisplayDialog("오류", 
-                $"Standing Melee Attack Downward.fbx에서 AnimationClip을 찾을 수 없습니다.\n\n" +
-                $"FBX 파일 내 애셋들:\n{assetList}", "확인");
-            return;
-        }
-        
-        Debug.Log($"[MixamoAnimationEventFixer] 사용할 애니메이션: {originalClip.name}");
+            ["HollyPrist"] = "Assets/Jaehyeon/Animations/HollyPrist.controller",
+            ["HollyHuman"] = "Assets/Jaehyeon/Animations/HollyHuman.controller",
+            ["HollyBoss"] = "Assets/Jaehyeon/Animations/HollyBoss.controller"
+        };
 
         // 새 디렉토리 생성
-        string newDir = "Assets/Animations/EnemyAttacks";
+        string newDir = "Assets/Animations/BossAttacks";
         if (!Directory.Exists(newDir))
         {
             Directory.CreateDirectory(newDir);
         }
 
-        // 새 애니메이션 클립 생성
-        AnimationClip newClip = new AnimationClip();
-        newClip.name = "Enemy_Attack1_WithEvent";
+        int createdCount = 0;
+        string createdList = "";
+
+        foreach (var boss in bossControllers)
+        {
+            string bossName = boss.Key;
+            string controllerPath = boss.Value;
+            
+            // 애니메이터 컨트롤러 로드
+            UnityEditor.Animations.AnimatorController controller = 
+                AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(controllerPath);
+                
+            if (controller == null)
+            {
+                Debug.LogWarning($"[MixamoAnimationEventFixer] {controllerPath}를 찾을 수 없습니다.");
+                continue;
+            }
+
+            // Attack1, Attack2 상태에서 애니메이션 추출
+            string[] attackStates = { "Attack1", "Attack2" };
+            
+            foreach (string attackName in attackStates)
+            {
+                AnimationClip originalClip = GetAnimationFromController(controller, attackName);
+                
+                if (originalClip == null)
+                {
+                    Debug.LogWarning($"[MixamoAnimationEventFixer] {bossName}의 {attackName} 애니메이션을 찾을 수 없습니다.");
+                    continue;
+                }
+
+                // 새 애니메이션 클립 생성
+                AnimationClip newClip = new AnimationClip();
+                newClip.name = $"{bossName}_{attackName}_WithEvent";
+                
+                // 원본 애니메이션의 모든 커브를 복사
+                EditorUtility.CopySerialized(originalClip, newClip);
+                
+                // Animation Event 추가
+                AddAnimationEventsToClip(newClip, attackName);
+                
+                // 애니메이션 파일 저장
+                string newPath = $"{newDir}/{bossName}_{attackName}_WithEvent.anim";
+                AssetDatabase.CreateAsset(newClip, newPath);
+                
+                createdCount++;
+                createdList += $"• {bossName}_{attackName}_WithEvent.anim (원본: {originalClip.name})\n";
+                
+                Debug.Log($"[MixamoAnimationEventFixer] 새 애니메이션 생성: {newPath} (원본: {originalClip.name})");
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
         
-        // 원본 애니메이션의 모든 커브를 복사
-        EditorUtility.CopySerialized(originalClip, newClip);
+        EditorUtility.DisplayDialog("완료!", 
+            $"🎯 {createdCount}개의 보스 공격 애니메이션이 생성되었습니다!\n\n" +
+            $"생성된 파일들:\n{createdList}\n" +
+            "이제 '모든 보스 Animator Controller 업데이트'를 클릭하세요.", "확인");
+    }
+
+    /// <summary>
+    /// 애니메이터 컨트롤러에서 특정 상태의 애니메이션 클립 추출
+    /// </summary>
+    private AnimationClip GetAnimationFromController(UnityEditor.Animations.AnimatorController controller, string stateName)
+    {
+        foreach (var layer in controller.layers)
+        {
+            foreach (var state in layer.stateMachine.states)
+            {
+                if (state.state.name == stateName)
+                {
+                    return state.state.motion as AnimationClip;
+                }
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// FBX 파일에서 첫 번째 AnimationClip 추출
+    /// </summary>
+    private AnimationClip GetAnimationClipFromFBX(string fbxPath)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(fbxPath);
         
-        // Animation Event 추가 (Unity 2023+ 호환)
-        AnimationEvent attackEvent = new AnimationEvent();
-        attackEvent.time = originalClip.length * 0.6f; // 60% 지점
-        attackEvent.functionName = "OnAttack1Hit";
+        foreach (Object asset in assets)
+        {
+            if (asset is AnimationClip clip)
+            {
+                return clip;
+            }
+        }
+        
+        return null;
+    }
+
+    /// <summary>
+    /// 애니메이션 클립에 적절한 Animation Event 추가
+    /// </summary>
+    private void AddAnimationEventsToClip(AnimationClip clip, string attackType)
+    {
+        var events = new System.Collections.Generic.List<AnimationEvent>(clip.events);
+        
+        // OnAttack1Hit 이벤트 (데미지용) - 60% 지점
+        AnimationEvent hitEvent = new AnimationEvent();
+        hitEvent.time = clip.length * 0.6f;
+        hitEvent.functionName = "OnAttack1Hit";
+        events.Add(hitEvent);
+        
+        // OnAttackComplete 이벤트 (패턴 전환용) - 90% 지점
+        AnimationEvent completeEvent = new AnimationEvent();
+        completeEvent.time = clip.length * 0.9f;
+        completeEvent.functionName = "OnAttackComplete";
+        events.Add(completeEvent);
         
         // Unity 2023+ API 사용
         try
         {
-            // 새로운 API 시도
-            var events = new System.Collections.Generic.List<AnimationEvent>(newClip.events);
-            events.Add(attackEvent);
-            AnimationUtility.SetAnimationEvents(newClip, events.ToArray());
-            Debug.Log("[MixamoAnimationEventFixer] 새 API로 Animation Event 추가 성공");
+            AnimationUtility.SetAnimationEvents(clip, events.ToArray());
+            Debug.Log($"[MixamoAnimationEventFixer] {clip.name}에 Animation Event 추가 성공 (새 API)");
         }
         catch (System.Exception)
         {
             // 구버전 호환성
-            var events = new System.Collections.Generic.List<AnimationEvent>(newClip.events);
-            events.Add(attackEvent);
-            newClip.events = events.ToArray();
-            Debug.Log("[MixamoAnimationEventFixer] 구 API로 Animation Event 추가");
+            clip.events = events.ToArray();
+            Debug.Log($"[MixamoAnimationEventFixer] {clip.name}에 Animation Event 추가 (구 API)");
         }
-
-        // 애니메이션 파일 저장
-        string newPath = $"{newDir}/Enemy_Attack1_WithEvent.anim";
-        AssetDatabase.CreateAsset(newClip, newPath);
-
-        Debug.Log($"[MixamoAnimationEventFixer] 새 애니메이션 생성: {newPath}");
-        
-        EditorUtility.DisplayDialog("완료!", 
-            "Enemy_Attack1_WithEvent.anim 파일이 생성되었습니다!\n" +
-            "이제 '모든 Enemy Animator Controller 업데이트'를 클릭하세요.", "확인");
     }
 
     /// <summary>
-    /// 모든 Enemy Animator Controller를 새 애니메이션으로 업데이트
+    /// 모든 보스 Animator Controller를 새 애니메이션으로 업데이트
+    /// </summary>
+    private void UpdateAllBossAnimatorControllers()
+    {
+        // 보스별 애니메이션 매핑
+        var bossAnimationMapping = new Dictionary<string, Dictionary<string, string>>()
+        {
+            ["HollyPrist"] = new Dictionary<string, string>()
+            {
+                ["Attack1"] = "Assets/Animations/BossAttacks/HollyPrist_Attack1_WithEvent.anim",
+                ["Attack2"] = "Assets/Animations/BossAttacks/HollyPrist_Attack2_WithEvent.anim"
+            },
+            ["HollyHuman"] = new Dictionary<string, string>()
+            {
+                ["Attack1"] = "Assets/Animations/BossAttacks/HollyHuman_Attack1_WithEvent.anim",
+                ["Attack2"] = "Assets/Animations/BossAttacks/HollyHuman_Attack2_WithEvent.anim"
+            },
+            ["HollyBoss"] = new Dictionary<string, string>()
+            {
+                ["Attack1"] = "Assets/Animations/BossAttacks/HollyBoss_Attack1_WithEvent.anim",
+                ["Attack2"] = "Assets/Animations/BossAttacks/HollyBoss_Attack2_WithEvent.anim"
+            }
+        };
+
+        // 모든 Animator Controller 찾기
+        string[] controllerGuids = AssetDatabase.FindAssets("t:AnimatorController", new[] { "Assets" });
+        int updatedCount = 0;
+        string updateLog = "";
+
+        foreach (string guid in controllerGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            UnityEditor.Animations.AnimatorController controller = 
+                AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(path);
+
+            if (controller != null && IsBossController(controller))
+            {
+                string controllerName = controller.name;
+                string bossType = GetBossTypeFromController(controllerName);
+                
+                if (bossAnimationMapping.ContainsKey(bossType))
+                {
+                    var animations = bossAnimationMapping[bossType];
+                    
+                    // Attack1, Attack2 상태 찾아서 업데이트
+                    foreach (var layer in controller.layers)
+                    {
+                        foreach (var state in layer.stateMachine.states)
+                        {
+                            string stateName = state.state.name;
+                            
+                            if (animations.ContainsKey(stateName))
+                            {
+                                string animPath = animations[stateName];
+                                AnimationClip newClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animPath);
+                                
+                                if (newClip != null)
+                                {
+                                    state.state.motion = newClip;
+                                    updateLog += $"• {controllerName}.{stateName} → {newClip.name}\n";
+                                    Debug.Log($"[MixamoAnimationEventFixer] {controllerName}의 {stateName} 애니메이션 업데이트: {newClip.name}");
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"[MixamoAnimationEventFixer] 애니메이션을 찾을 수 없습니다: {animPath}");
+                                }
+                            }
+                        }
+                    }
+                    
+                    updatedCount++;
+                    EditorUtility.SetDirty(controller);
+                }
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        EditorUtility.DisplayDialog("완료!", 
+            $"🎯 {updatedCount}개의 보스 Animator Controller가 업데이트되었습니다!\n\n" +
+            $"업데이트 내역:\n{updateLog}\n" +
+            "이제 각 보스가 고유한 Attack1, Attack2 애니메이션을 사용하며,\n" +
+            "OnAttack1Hit + OnAttackComplete 이벤트가 정상 작동합니다!", "확인");
+    }
+
+    /// <summary>
+    /// 보스용 Animator Controller인지 확인
+    /// </summary>
+    private bool IsBossController(UnityEditor.Animations.AnimatorController controller)
+    {
+        string name = controller.name.ToLower();
+        return name.Contains("holly") || name.Contains("boss") || name.Contains("priest");
+    }
+
+    /// <summary>
+    /// 컨트롤러 이름에서 보스 타입 추출
+    /// </summary>
+    private string GetBossTypeFromController(string controllerName)
+    {
+        string name = controllerName.ToLower();
+        
+        if (name.Contains("hollyprist") || name.Contains("prist"))
+            return "HollyPrist";
+        else if (name.Contains("hollyhuman") || name.Contains("human"))
+            return "HollyHuman";
+        else if (name.Contains("hollyboss") || name.Contains("boss"))
+            return "HollyBoss";
+            
+        return "HollyHuman"; // 기본값
+    }
+
+    /// <summary>
+    /// 기존 Enemy용 Animator Controller 업데이트 (하위 호환성)
     /// </summary>
     private void UpdateEnemyAnimatorControllers()
     {
@@ -203,10 +379,7 @@ public class MixamoAnimationEventFixer : EditorWindow
         string name = controller.name.ToLower();
         return name.Contains("enemy") || 
                name.Contains("cultist") || 
-               name.Contains("fanatic") || 
-               name.Contains("priest") || 
-               name.Contains("boss") ||
-               name.Contains("holly"); // HollyHuman.controller도 포함
+               name.Contains("fanatic");
     }
 }
 #endif 
