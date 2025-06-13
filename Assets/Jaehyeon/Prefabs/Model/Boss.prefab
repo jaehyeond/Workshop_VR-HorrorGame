@@ -804,7 +804,7 @@ MonoBehaviour:
   walkSpeed: 1.5
   runSpeed: 4
   maxHealth: 100
-  currentHealth: 0
+  currentHealth: 100
   hitStunDuration: 1
   prayingSpot: {fileID: 0}
   enableDebugLogs: 1

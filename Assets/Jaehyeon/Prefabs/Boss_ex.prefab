@@ -46,6 +46,7 @@ GameObject:
   - component: {fileID: 3560125708338823967}
   - component: {fileID: 3125011430169116687}
   - component: {fileID: 5153945794803286256}
+  - component: {fileID: -2633367956978016569}
   m_Layer: 0
   m_Name: Boss_ex
   m_TagString: Untagged
@@ -261,6 +262,42 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-2633367956978016569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 227194957713890267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a333f10d9c1f5f4388d34fb02fbffaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bossName: Cult Leader
+  maxHealth: 500
+  currentHealth: 300
+  phase2HealthThreshold: 0.7
+  phase3HealthThreshold: 0.3
+  walkSpeed: 2
+  runSpeed: 5
+  chargeSpeed: 8
+  detectionRange: 15
+  attackRange: 2.5
+  specialAttackRange: 8
+  basicAttackDamage: 40
+  heavyAttackDamage: 60
+  specialAttackDamage: 80
+  attackCooldown: 2
+  specialAttackCooldown: 8
+  introAnimationDuration: 3
+  phaseTransitionDuration: 2
+  screenShakeIntensity: 0.5
+  hapticFeedbackIntensity: 0.8
+  phaseSounds: []
+  attackSounds: []
+  introSound: {fileID: 0}
+  deathSound: {fileID: 0}
 --- !u!1 &412653584928663469
 GameObject:
   m_ObjectHideFlags: 0
