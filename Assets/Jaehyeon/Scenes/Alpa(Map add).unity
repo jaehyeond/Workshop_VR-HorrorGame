@@ -1202,6 +1202,37 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -70}
   m_SizeDelta: {x: 300, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &599807861
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 599807862}
+  m_Layer: 0
+  m_Name: Praying Spot (5)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &599807862
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 599807861}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -21.1, y: 0, z: -4.43}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2650238602468667183}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &619434563
 GameObject:
   m_ObjectHideFlags: 0
@@ -13995,14 +14026,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c95de996d122d3c44bda8896976d95f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cultistPrefab: {fileID: 4363578991983522480, guid: 6924745a509f7b746bc74f3d4548b1aa, type: 3}
-  prayingSpots:
+  enemyPrefab: {fileID: 4363578991983522480, guid: 6924745a509f7b746bc74f3d4548b1aa, type: 3}
+  enemyPrayingSpots:
   - {fileID: 1761450191552536235}
   - {fileID: 2420389712844799553}
   - {fileID: 4073092334844213570}
   - {fileID: 7679356855851832166}
   - {fileID: 2396638204078480850}
-  spawnOnStart: 1
+  spawnEnemiesOnStart: 1
+  bossPrefab: {fileID: 6261758841071719656, guid: cf8095848fe5ecb438339549b517379b, type: 3}
+  bossPrayingSpots:
+  - {fileID: 599807862}
+  spawnBossOnStart: 1
   enableDebugLogs: 1
 --- !u!23 &2337686953611288332
 MeshRenderer:
@@ -15614,6 +15649,7 @@ Transform:
   - {fileID: 4073092334844213570}
   - {fileID: 7679356855851832166}
   - {fileID: 2396638204078480850}
+  - {fileID: 599807862}
   m_Father: {fileID: 666554390589679348}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2653913884979190450

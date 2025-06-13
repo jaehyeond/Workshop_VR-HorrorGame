@@ -84,7 +84,7 @@ public class PlayerSpawnManager : MonoBehaviour
     void FindPlayerController()
     {
         // OVRPlayerController 찾기
-        OVRPlayerController ovrPlayer = FindFirstObjectByType<OVRPlayerController>();
+        OVRPlayerController ovrPlayer = FindAnyObjectByType<OVRPlayerController>();
         if (ovrPlayer != null)
         {
             playerController = ovrPlayer.transform;
@@ -102,7 +102,7 @@ public class PlayerSpawnManager : MonoBehaviour
         }
         
         // OVRCameraRig 찾기
-        OVRCameraRig cameraRig = FindFirstObjectByType<OVRCameraRig>();
+        OVRCameraRig cameraRig = FindAnyObjectByType<OVRCameraRig>();
         if (cameraRig != null)
         {
             playerController = cameraRig.transform;

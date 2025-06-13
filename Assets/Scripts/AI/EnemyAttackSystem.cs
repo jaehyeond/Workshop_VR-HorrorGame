@@ -55,14 +55,14 @@ public class EnemyAttackSystem : MonoBehaviour
     void FindPlayer()
     {
         // VRPlayerHealth 컴포넌트 찾기
-        playerHealth = FindFirstObjectByType<VRPlayerHealth>();
+        playerHealth = FindAnyObjectByType<VRPlayerHealth>();
         if (playerHealth != null)
         {
             player = playerHealth.transform;
             Debug.Log($"[EnemyAttackSystem] 플레이어 찾음: {player.name} (위치: {player.position})");
             
             // VRPlayerHitTarget 찾기
-            playerHitTarget = FindFirstObjectByType<VRPlayerHitTarget>();
+            playerHitTarget = FindAnyObjectByType<VRPlayerHitTarget>();
             if (playerHitTarget != null)
             {
                 Debug.Log($"[EnemyAttackSystem] 플레이어 타격 영역 찾음: {playerHitTarget.name}");

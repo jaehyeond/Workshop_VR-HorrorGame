@@ -29,7 +29,7 @@ public class VRPlayerHitTarget : MonoBehaviour
         playerHealth = GetComponentInParent<VRPlayerHealth>();
         if (playerHealth == null)
         {
-            playerHealth = FindFirstObjectByType<VRPlayerHealth>();
+            playerHealth = FindAnyObjectByType<VRPlayerHealth>();
         }
         
         if (playerHealth == null)

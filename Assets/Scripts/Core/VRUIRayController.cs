@@ -136,7 +136,7 @@ public class VRUIRayController : MonoBehaviour
     void FindUIComponents()
     {
         // Event System 찾기
-        eventSystem = FindFirstObjectByType<EventSystem>();
+        eventSystem = FindAnyObjectByType<EventSystem>();
         if (eventSystem == null)
         {
             Debug.LogWarning("[VRUIRayController] EventSystem을 찾을 수 없습니다!");

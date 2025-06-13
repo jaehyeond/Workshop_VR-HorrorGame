@@ -106,7 +106,7 @@ public class GameOverManager : MonoBehaviour
     void FindReferences()
     {
         // VRPlayerHealth 찾기
-        playerHealth = FindFirstObjectByType<VRPlayerHealth>();
+        playerHealth = FindAnyObjectByType<VRPlayerHealth>();
         
         // PlayerSpawnManager 찾기
         spawnManager = PlayerSpawnManager.Instance;
@@ -172,7 +172,7 @@ public class GameOverManager : MonoBehaviour
     void FindVRRayController()
     {
         // 기존 VRUIRayController 찾기
-        vrRayController = FindFirstObjectByType<VRUIRayController>();
+                    vrRayController = FindAnyObjectByType<VRUIRayController>();
         
         if (vrRayController == null)
         {

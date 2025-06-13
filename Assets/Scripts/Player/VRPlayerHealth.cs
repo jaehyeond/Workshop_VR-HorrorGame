@@ -67,14 +67,14 @@ public class VRPlayerHealth : MonoBehaviour
     void FindReferences()
     {
         // Post Processing Manager 찾기
-        postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
+        postProcessingManager = FindAnyObjectByType<VRPostProcessingManager>();
         if (postProcessingManager == null)
         {
             Debug.LogWarning("[VRPlayerHealth] VRPostProcessingManager를 찾을 수 없습니다!");
         }
         
         // OVR Camera Rig 찾기
-        cameraRig = FindFirstObjectByType<OVRCameraRig>();
+        cameraRig = FindAnyObjectByType<OVRCameraRig>();
         if (cameraRig == null)
         {
             Debug.LogWarning("[VRPlayerHealth] OVRCameraRig를 찾을 수 없습니다!");
@@ -133,7 +133,7 @@ public class VRPlayerHealth : MonoBehaviour
         if (postProcessingManager == null) 
         {
             // 다시 찾기 시도
-            postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
+            postProcessingManager = FindAnyObjectByType<VRPostProcessingManager>();
             if (postProcessingManager == null)
             {
                 return;
@@ -268,7 +268,7 @@ public class VRPlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
         
         // 화면 효과 완전 정상화
-        var postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
+        var postProcessingManager = FindAnyObjectByType<VRPostProcessingManager>();
         if (postProcessingManager != null)
         {
             postProcessingManager.ResetToNormalState();
@@ -292,22 +292,35 @@ public class VRPlayerHealth : MonoBehaviour
     /// </summary>
     void OnGUI()
     {
+        // 에디터에서만 디버그 GUI 표시
+        #if UNITY_EDITOR
         if (!Application.isPlaying) return;
         
-        GUILayout.BeginArea(new Rect(10, 10, 300, 100));
-        GUILayout.Label($"체력: {currentHealth:F1}/{maxHealth}");
-        GUILayout.Label($"체력 비율: {HealthPercentage:P1}");
-        GUILayout.Label($"무적 상태: {(isInvincible ? "ON" : "OFF")}");
+        // null 체크 추가
+        if (this == null) return;
         
-        if (GUILayout.Button("테스트 데미지 (20)"))
+        try
         {
-            TakeDamage(20f);
+            GUILayout.BeginArea(new Rect(10, 10, 300, 100));
+            GUILayout.Label($"체력: {currentHealth:F1}/{maxHealth}");
+            GUILayout.Label($"체력 비율: {HealthPercentage:P1}");
+            GUILayout.Label($"무적 상태: {(isInvincible ? "ON" : "OFF")}");
+            
+            if (GUILayout.Button("테스트 데미지 (20)"))
+            {
+                TakeDamage(20f);
+            }
+            
+            if (GUILayout.Button("체력 회복 (30)"))
+            {
+                Heal(30f);
+            }
+            GUILayout.EndArea();
         }
-        
-        if (GUILayout.Button("체력 회복 (30)"))
+        catch (System.Exception e)
         {
-            Heal(30f);
+            Debug.LogWarning($"[VRPlayerHealth] OnGUI 오류: {e.Message}");
         }
-        GUILayout.EndArea();
+        #endif
     }
 } 

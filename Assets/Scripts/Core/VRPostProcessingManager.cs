@@ -25,6 +25,13 @@ public class VRPostProcessingManager : MonoBehaviour
     [Header("VR Post Processing 설정")]
     [SerializeField] private bool enableEffects = true;
     
+    // enableEffects 속성 접근자
+    public bool EnableEffects 
+    { 
+        get => enableEffects; 
+        set => enableEffects = value; 
+    }
+    
     // Post Processing 컴포넌트들
     private Volume globalVolume;
     private VolumeProfile volumeProfile;
