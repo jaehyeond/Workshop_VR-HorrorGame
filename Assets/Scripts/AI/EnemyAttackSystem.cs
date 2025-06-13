@@ -84,7 +84,7 @@ public class EnemyAttackSystem : MonoBehaviour
             GameObject playerObj = GameObject.FindWithTag("Player");
             if (playerObj != null)
             {
-                Debug.Log($"[EnemyAttackSystem] Player 태그로 찾음: {playerObj.name}");
+                
                 player = playerObj.transform;
             }
         }
@@ -120,6 +120,26 @@ public class EnemyAttackSystem : MonoBehaviour
     public void OnAttack1Hit()
     {
         ProcessInstantAttack();
+    }
+    
+    /// <summary>
+    /// 공격 완료 시 호출되는 함수 (Animation Event용)
+    /// BossAttackPattern의 OnAttackComplete를 호출
+    /// </summary>
+    public void OnAttackComplete()
+    {
+        Debug.Log($"[EnemyAttackSystem] OnAttackComplete 호출됨!");
+        
+        // BossAttackPattern 컴포넌트 찾아서 호출
+        BossAttackPattern bossPattern = GetComponent<BossAttackPattern>();
+        if (bossPattern != null)
+        {
+            bossPattern.OnAttackComplete();
+        }
+        else
+        {
+            Debug.LogWarning($"[EnemyAttackSystem] BossAttackPattern 컴포넌트를 찾을 수 없습니다!");
+        }
     }
     
     /// <summary>

@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: 3125011430169116687}
   - component: {fileID: 5153945794803286256}
   - component: {fileID: -2633367956978016569}
+  - component: {fileID: 3143600881882571553}
   m_Layer: 0
   m_Name: Boss_ex
   m_TagString: Untagged
@@ -298,6 +299,29 @@ MonoBehaviour:
   attackSounds: []
   introSound: {fileID: 0}
   deathSound: {fileID: 0}
+--- !u!114 &3143600881882571553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 227194957713890267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80104af22223c2a408982260cd41f90c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDamage: 25
+  attackRange: 5
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attackPoint: {fileID: 0}
+  useHandAsAttackPoint: 1
+  attackSound: {fileID: 0}
+  attackEffect: {fileID: 0}
+  enableDebug: 1
+  skipLineOfSightCheck: 0
 --- !u!1 &412653584928663469
 GameObject:
   m_ObjectHideFlags: 0
