@@ -830,7 +830,7 @@ MonoBehaviour:
   useHandAsAttackPoint: 1
   attackSound: {fileID: 0}
   attackEffect: {fileID: 0}
-  enableDebug: 1
+  enableDebug: 0
   skipLineOfSightCheck: 0
 --- !u!114 &4187806561483672434
 MonoBehaviour:
@@ -845,7 +845,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBoss: 1
-  enableDebug: 0
+  enableDebug: 1
 --- !u!1 &6275310721100539863
 GameObject:
   m_ObjectHideFlags: 0

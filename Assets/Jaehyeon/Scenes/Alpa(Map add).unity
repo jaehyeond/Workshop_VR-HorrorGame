@@ -14038,7 +14038,7 @@ MonoBehaviour:
   bossPrayingSpots:
   - {fileID: 599807862}
   spawnBossOnStart: 1
-  enableDebugLogs: 1
+  enableDebugLogs: 0
 --- !u!23 &2337686953611288332
 MeshRenderer:
   m_ObjectHideFlags: 0
