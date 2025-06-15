@@ -625,10 +625,10 @@ public class BossAI : MonoBehaviour
         // 게임 승리 처리
         Debug.Log("보스 처치! 게임 승리!");
         
-        // GameProgressManager에 보스 처치 알림
-        if (GameProgressManager.Instance != null)
+        // GameFlowManager에 보스 처치 알림
+        if (GameFlowManager.Instance != null)
         {
-            GameProgressManager.Instance.NotifyBossDefeated();
+            GameFlowManager.Instance.NotifyBossDefeated();
         }
         
         // GameOverManager나 게임 승리 매니저 호출

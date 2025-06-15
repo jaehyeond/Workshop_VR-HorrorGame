@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 딸 구출 트리거 - 플레이어가 딸에게 접근하면 GameProgressManager에 알림
+/// 딸 구출 트리거 - 플레이어가 딸에게 접근하면 GameFlowManager에 알림
 /// </summary>
 public class DaughterRescueTrigger : MonoBehaviour
 {
@@ -54,15 +54,15 @@ public class DaughterRescueTrigger : MonoBehaviour
     void CheckGameState()
     {
         // 보스가 처치되지 않았다면 트리거 비활성화
-        if (requiresBossDefeated && GameProgressManager.Instance != null)
+        if (requiresBossDefeated && GameFlowManager.Instance != null)
         {
-            if (!GameProgressManager.Instance.IsBossDefeated)
+            if (!GameFlowManager.Instance.IsBossDefeated)
             {
                 triggerCollider.enabled = false;
                 DebugLog("보스가 아직 처치되지 않아 구출 트리거 비활성화");
                 
                 // 보스 처치 이벤트 구독
-                GameProgressManager.Instance.OnBossDefeated += OnBossDefeated;
+                GameFlowManager.Instance.OnBossDefeated += OnBossDefeated;
             }
         }
     }
@@ -77,9 +77,9 @@ public class DaughterRescueTrigger : MonoBehaviour
         }
         
         // 이벤트 구독 해제
-        if (GameProgressManager.Instance != null)
+        if (GameFlowManager.Instance != null)
         {
-            GameProgressManager.Instance.OnBossDefeated -= OnBossDefeated;
+            GameFlowManager.Instance.OnBossDefeated -= OnBossDefeated;
         }
     }
     
@@ -130,10 +130,10 @@ public class DaughterRescueTrigger : MonoBehaviour
         // 구출 효과 재생
         PlayRescueEffect();
         
-        // GameProgressManager에 알림
-        if (GameProgressManager.Instance != null)
+        // GameFlowManager에 알림
+        if (GameFlowManager.Instance != null)
         {
-            GameProgressManager.Instance.NotifyDaughterRescued();
+            GameFlowManager.Instance.NotifyDaughterRescued();
         }
         
         // 이벤트 호출
@@ -179,7 +179,7 @@ public class DaughterRescueTrigger : MonoBehaviour
         {
             Gizmos.color = Color.green;
         }
-        else if (requiresBossDefeated && GameProgressManager.Instance != null && !GameProgressManager.Instance.IsBossDefeated)
+        else if (requiresBossDefeated && GameFlowManager.Instance != null && !GameFlowManager.Instance.IsBossDefeated)
         {
             Gizmos.color = Color.red;
         }
@@ -194,9 +194,9 @@ public class DaughterRescueTrigger : MonoBehaviour
     void OnDestroy()
     {
         // 이벤트 구독 해제
-        if (GameProgressManager.Instance != null)
+        if (GameFlowManager.Instance != null)
         {
-            GameProgressManager.Instance.OnBossDefeated -= OnBossDefeated;
+            GameFlowManager.Instance.OnBossDefeated -= OnBossDefeated;
         }
     }
 } 

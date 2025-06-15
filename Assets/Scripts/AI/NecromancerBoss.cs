@@ -267,8 +267,8 @@ public class NecromancerBoss : MonoBehaviour
             VolumeManager.Instance.PlayVictoryBGM();
             
         // 게임 진행 알림
-        if (GameProgressManager.Instance != null)
-            GameProgressManager.Instance.NotifyBossDefeated();
+        if (GameFlowManager.Instance != null)
+            GameFlowManager.Instance.NotifyBossDefeated();
             
         OnBossDefeated?.Invoke();
         
