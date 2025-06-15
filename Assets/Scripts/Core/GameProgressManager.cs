@@ -360,7 +360,15 @@ public class GameProgressManager : MonoBehaviour
 
     void EnableBossAI()
     {
-        // 보스 AI 찾기 및 활성화
+        // 네크로맨서 보스 찾기 및 활성화
+        NecromancerBoss necromancerBoss = FindFirstObjectByType<NecromancerBoss>();
+        if (necromancerBoss != null)
+        {
+            necromancerBoss.gameObject.SetActive(true);
+            DebugLog("[GameProgressManager] 네크로맨서 보스 활성화");
+        }
+        
+        // 기존 BossAI도 호환성을 위해 체크
         BossAI bossAI = FindFirstObjectByType<BossAI>();
         if (bossAI != null)
         {

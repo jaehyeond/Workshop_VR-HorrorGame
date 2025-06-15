@@ -200,13 +200,41 @@ public class CultistSpawner : MonoBehaviour
         GameObject newDaughter = Instantiate(daughterPrefab, spawnPosition, daughterSpot.rotation);
         newDaughter.name = $"Daughter {index + 1}";
         
-        // Daughter 컴포넌트 확인 (필요시 추가 설정)
-        // 예: DaughterController, InteractableObject 등
+        // 딸 구출 트리거 자동 추가
+        SetupDaughterRescueTrigger(newDaughter);
         
         DebugLog($"Daughter {newDaughter.name}을 {daughterSpot.name}에 배치했습니다.");
         
         // 스폰된 리스트에 추가
         spawnedDaughters.Add(newDaughter);
+    }
+    
+    private void SetupDaughterRescueTrigger(GameObject daughter)
+    {
+        // DaughterRescueTrigger 컴포넌트 추가
+        DaughterRescueTrigger rescueTrigger = daughter.GetComponent<DaughterRescueTrigger>();
+        if (rescueTrigger == null)
+        {
+            rescueTrigger = daughter.AddComponent<DaughterRescueTrigger>();
+        }
+        
+        // Collider가 없으면 추가
+        Collider daughterCollider = daughter.GetComponent<Collider>();
+        if (daughterCollider == null)
+        {
+            SphereCollider sphereCollider = daughter.AddComponent<SphereCollider>();
+            sphereCollider.radius = 2f; // VR에서 접근하기 쉬운 크기
+            sphereCollider.isTrigger = true;
+        }
+        else if (!daughterCollider.isTrigger)
+        {
+            // 기존 Collider가 있지만 트리거가 아니면 추가 트리거 생성
+            SphereCollider triggerCollider = daughter.AddComponent<SphereCollider>();
+            triggerCollider.radius = 2f;
+            triggerCollider.isTrigger = true;
+        }
+        
+        DebugLog($"딸 구출 트리거 설정 완료: {daughter.name}");
     }
     
     [ContextMenu("Clear All Enemies")]
