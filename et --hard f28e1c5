@@ -1,0 +1,80 @@
+[33m8a62595[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mJaehyeon[m[33m, [m[1;31morigin/Jaehyeon[m[33m)[m scene setup setting okay
+[33mf28e1c5[m BGM Sound Okay
+[33m15a6ef2[m SoundManager
+[33mc6a836c[m Folder Delete + Boss Avatar Change
+[33m2db5c6d[m Light End
+[33mecfc0d4[m position setting
+[33md4df1e2[m Room New Setting + Daughter Spot
+[33m29373cd[m boss animation remake
+[33m53d29a7[m animation event등록 완료
+[33mf99e5ca[m 문제발견. 해결방법 찾음
+[33mf7e0df6[m Boss setting first complete
+[33m93608bc[m exapmple set
+[33mbb88c9e[m enemy spot change
+[33m6b2b5a2[m package import3
+[33m0348a9f[m package import2
+[33mdbf11de[m package import1
+[33m7971e69[m blood effect package import
+[33md7ae454[m 거치대 세팅
+[33mbcb7ebb[m 불필요한 Debug들 제거
+[33m8468c4d[m Continue Restart 성공
+[33mb3bd3f3[m UI setting Respawn, Restart
+[33m4136a21[m enemy navimsh test
+[33md20c05e[m setup tool 이모지 제거
+[33ma710f7a[m 비네팅 점진 구현 성공
+[33m6af9cd7[m color setting
+[33m049743a[m enemy때렸을 때 빨갛게 변하는거 성공
+[33m2641754[m G키 H키 눌렀을 떄 됌
+[33m072df30[m 색상완성
+[33m335a377[m postprocessing
+[33m7d0e734[m prist setting
+[33me0c4f5f[m 무기랑 HIt성공
+[33ma0eed20[m hit 성공
+[33m839077a[m enemy attack change1
+[33m0f50dac[m animation 수정 및 hit판정 알고리즘 재구성
+[33mafce0b8[m 폴더 위치 정리
+[33m4786f2a[m Boss && Girls Setting okay
+[33mc5340e1[m model change
+[33mbfd5307[m Prefab(Facture) setting
+[33m8c28981[m map test1
+[33m25d0d06[m Character Attack System
+[33m7e8428b[m animation add
+[33m1f9e386[m Unity 경고 문제 해결(주석 처리)
+[33m6a03a35[m Alpa Map add setting
+[33md6edc3c[m Add Animation(Hit, death)
+[33m473e00d[m map add
+[33m80a81bd[m Readme 제거 및 재수정
+[33mc13288f[m revert scene clear
+[33mae19c4f[m scene 날라간거 복구
+[33m4a7f52d[m ax grab setting
+[33m01e4c76[m cursor rule setting
+[33m9d74c33[m gp manual delete
+[33m3ca2704[m gp delete
+[33med0ae77[m 20마리 Setting Okay
+[33m44b5192[m 리팩터링으로 책임소재 분할
+[33m14aa25e[m Chase 로직 처리
+[33mb09345b[m fog setting
+[33m746a618[m Save Scene
+[33m039f988[m Chase and Hit
+[33m0f625d8[m Ai navimesh setting
+[33mad12957[m Mapping Setting
+[33me472361[m Animation setting
+[33m1b73e56[m Avatar(Player) setting
+[33mdcc6a62[m VR enemy setting
+[33m661cf78[m Hide && Rotation Setting2
+[33mc4d5721[m smooth Rotation + Hide 기능 초기 Setting
+[33mab5be98[m error(a*) 잡기 완료
+[33m541e9dc[m Cutom Setting1
+[33m6e2f2f5[m PlayerChangetest
+[33md87adc3[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m interaction5
+[33me761023[m interaciton4
+[33mf09e36b[m interaction3
+[33m13e2fa0[m interaction2
+[33m3b2ea7b[m interaction1
+[33m280d5f1[m Asset Movement set2
+[33m8b8edf7[m Asset movement set1
+[33m2e95ca7[m env setting
+[33mc3f972a[m PlayerSetting
+[33m0347960[m scene + meta setting
+[33m7ec2ca1[m Setting
+[33m0225044[m Initial commit
