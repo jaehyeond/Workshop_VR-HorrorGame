@@ -48,16 +48,13 @@ public class BossAI : MonoBehaviour
     public float screenShakeIntensity = 0.5f;
     public float hapticFeedbackIntensity = 0.8f;
     
-    [Header("오디오")]
-    public AudioClip[] phaseSounds;  // 단계별 사운드
-    public AudioClip[] attackSounds;  // 공격 사운드
-    public AudioClip introSound;     // 등장 사운드
-    public AudioClip deathSound;     // 사망 사운드
+    [Header("오디오 (VolumeManager 사용)")]
+    [Tooltip("VolumeManager를 통해 사운드가 재생됩니다")]
+    public bool useVolumeManager = true;
     
     // 컴포넌트 참조
     private NavMeshAgent agent;
     private Animator animator;
-    private AudioSource audioSource;
     private BossStateMachine stateMachine;
     
     // 플레이어 참조
@@ -108,7 +105,6 @@ public class BossAI : MonoBehaviour
         // 컴포넌트 초기화
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        audioSource = GetComponent<AudioSource>();
         
         // StateMachine 추가
         stateMachine = GetComponent<BossStateMachine>();
@@ -142,10 +138,11 @@ public class BossAI : MonoBehaviour
     {
         isIntroPlaying = true;
         
-        // 등장 사운드 재생
-        if (audioSource != null && introSound != null)
+        // 등장 사운드 재생 (VolumeManager 사용)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            audioSource.PlayOneShot(introSound);
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.BossIntro);
+            VolumeManager.Instance.PlayBossBattleBGM(); // 보스전 BGM 시작
         }
         
         // VR 화면 효과 (보스 등장)
@@ -210,10 +207,10 @@ public class BossAI : MonoBehaviour
             animator.SetInteger("BossPhase", newPhase);
         }
         
-        // 단계별 사운드
-        if (audioSource != null && phaseSounds != null && newPhase - 1 < phaseSounds.Length)
+        // 단계별 사운드 (VolumeManager 사용)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            audioSource.PlayOneShot(phaseSounds[newPhase - 1]);
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.BossPhaseTransition, transform.position, transform);
         }
         
         // VR 효과
@@ -508,10 +505,11 @@ public class BossAI : MonoBehaviour
         animator?.SetBool("IsDead", true);
         animator?.SetTrigger("Die");
         
-        // 사망 사운드
-        if (audioSource != null && deathSound != null)
+        // 사망 사운드 (VolumeManager 사용)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            audioSource.PlayOneShot(deathSound);
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.BossDeath, transform.position);
+            VolumeManager.Instance.PlayVictoryBGM(); // 승리 BGM 재생
         }
         
         // NavMeshAgent 비활성화
@@ -552,10 +550,13 @@ public class BossAI : MonoBehaviour
     
     void PlayAttackSound()
     {
-        if (audioSource != null && attackSounds != null && attackSounds.Length > 0)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            AudioClip randomSound = attackSounds[Random.Range(0, attackSounds.Length)];
-            audioSource.PlayOneShot(randomSound);
+            // 현재 공격 패턴에 따라 다른 사운드 재생
+            VolumeManager.SFXType attackSFX = VolumeManager.SFXType.BossAttack;
+            
+            // 3D 공간 사운드로 재생 (보스 위치에서)
+            VolumeManager.Instance.PlaySFX(attackSFX, transform.position, transform);
         }
     }
     

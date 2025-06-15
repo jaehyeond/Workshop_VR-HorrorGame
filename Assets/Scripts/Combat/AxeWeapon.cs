@@ -26,12 +26,12 @@ public class AxeWeapon : MonoBehaviour
     public Vector3 equipRotation = new Vector3(0, 0, 0); // 추가 회전 조정
     
     [Header("효과")]
-    public AudioClip hitSound;
-    public AudioClip criticalHitSound; // 치명타 사운드
-    public AudioClip equipSound; // 장착 사운드
-    public AudioClip unequipSound; // 해제 사운드
     public ParticleSystem hitEffect;
     public ParticleSystem bloodEffect; // 피 효과
+    
+    [Header("오디오 (VolumeManager 사용)")]
+    [Tooltip("VolumeManager를 통해 사운드가 재생됩니다")]
+    public bool useVolumeManager = true;
     
     [Header("햅틱 피드백 설정")]
     public float normalHitVibration = 0.6f;
@@ -257,10 +257,10 @@ public class AxeWeapon : MonoBehaviour
         transform.position = originalPosition;
         transform.rotation = originalRotation;
         
-        // 사운드 재생
-        if (audioSource != null && unequipSound != null)
+        // 사운드 재생 (VolumeManager 사용)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            audioSource.PlayOneShot(unequipSound);
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.AxeUnequip);
         }
         
         //Debug.Log("[AxeWeapon] 도끼 해제!");
@@ -365,14 +365,11 @@ public class AxeWeapon : MonoBehaviour
     
     private void PlayHitEffects(bool isCriticalHit)
     {
-        // 사운드 재생
-        if (audioSource != null)
+        // 사운드 재생 (VolumeManager 사용)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            AudioClip soundToPlay = isCriticalHit && criticalHitSound != null ? criticalHitSound : hitSound;
-            if (soundToPlay != null)
-            {
-                audioSource.PlayOneShot(soundToPlay, 0.8f);
-            }
+            VolumeManager.SFXType hitSFX = isCriticalHit ? VolumeManager.SFXType.AxeHit : VolumeManager.SFXType.AxeSwing;
+            VolumeManager.Instance.PlaySFX(hitSFX, transform.position);
         }
         
         // 파티클 효과

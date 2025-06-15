@@ -67,14 +67,14 @@ public class VRPlayerHealth : MonoBehaviour
     void FindReferences()
     {
         // Post Processing Manager 찾기
-        postProcessingManager = FindAnyObjectByType<VRPostProcessingManager>();
+        postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
         if (postProcessingManager == null)
         {
             Debug.LogWarning("[VRPlayerHealth] VRPostProcessingManager를 찾을 수 없습니다!");
         }
         
         // OVR Camera Rig 찾기
-        cameraRig = FindAnyObjectByType<OVRCameraRig>();
+        cameraRig = FindFirstObjectByType<OVRCameraRig>();
         if (cameraRig == null)
         {
             Debug.LogWarning("[VRPlayerHealth] OVRCameraRig를 찾을 수 없습니다!");
@@ -107,6 +107,18 @@ public class VRPlayerHealth : MonoBehaviour
         // VR 피격 효과 (즉시 적용)
         ApplyImmediateDamageEffect();
         
+        // 피격 사운드 재생 (VolumeManager 사용)
+        if (VolumeManager.Instance != null)
+        {
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.PlayerDamage);
+            
+            // 체력이 낮으면 심장박동 사운드 추가
+            if (currentHealth / maxHealth <= 0.25f)
+            {
+                VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.PlayerHeartbeat);
+            }
+        }
+        
         // 햅틱 피드백
         TriggerDamageHaptics();
         
@@ -133,7 +145,7 @@ public class VRPlayerHealth : MonoBehaviour
         if (postProcessingManager == null) 
         {
             // 다시 찾기 시도
-            postProcessingManager = FindAnyObjectByType<VRPostProcessingManager>();
+            postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
             if (postProcessingManager == null)
             {
                 return;
@@ -233,6 +245,13 @@ public class VRPlayerHealth : MonoBehaviour
     {
         Debug.Log("[VRPlayerHealth] 플레이어 사망!");
         
+        // 사망 사운드 재생 (VolumeManager 사용)
+        if (VolumeManager.Instance != null)
+        {
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.PlayerDeath);
+            VolumeManager.Instance.PlayGameOverBGM(); // 게임 오버 BGM 재생
+        }
+        
         // 사망 효과: 완전 빨강 화면
         if (postProcessingManager != null)
         {
@@ -256,6 +275,12 @@ public class VRPlayerHealth : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
         UpdateHealthBasedEffects();
         
+        // 회복 사운드 재생 (VolumeManager 사용)
+        if (VolumeManager.Instance != null)
+        {
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.PlayerHeal);
+        }
+        
         Debug.Log($"[VRPlayerHealth] 체력 회복 +{amount}! 현재 체력: {currentHealth}/{maxHealth}");
     }
     
@@ -268,7 +293,7 @@ public class VRPlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
         
         // 화면 효과 완전 정상화
-        var postProcessingManager = FindAnyObjectByType<VRPostProcessingManager>();
+        var postProcessingManager = FindFirstObjectByType<VRPostProcessingManager>();
         if (postProcessingManager != null)
         {
             postProcessingManager.ResetToNormalState();

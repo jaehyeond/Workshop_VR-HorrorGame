@@ -134,9 +134,12 @@ public class CultistStateMachine : MonoBehaviour
         {
             case AIState.Praying:
                 isPraying = true;
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
-                agent.ResetPath();
+                if (agent != null && agent.enabled)
+                {
+                    agent.isStopped = true;
+                    agent.velocity = Vector3.zero;
+                    agent.ResetPath();
+                }
                 
                 // 애니메이터 파라미터 설정
                 animator.SetBool("PlayerDetected", false);
@@ -146,9 +149,12 @@ public class CultistStateMachine : MonoBehaviour
                 break;
                 
             case AIState.MovingToPrayingSpot:
-                agent.isStopped = false;
-                agent.speed = cultistAI.runSpeed;
-                agent.stoppingDistance = 0.1f;
+                if (agent != null && agent.enabled)
+                {
+                    agent.isStopped = false;
+                    agent.speed = cultistAI.runSpeed;
+                    agent.stoppingDistance = 0.1f;
+                }
                 animator.SetBool("InAttackRange", false);
                 break;
                 
@@ -159,8 +165,11 @@ public class CultistStateMachine : MonoBehaviour
                 
             case AIState.Chasing:
                 isChasing = true;
-                agent.isStopped = false;
-                agent.speed = cultistAI.runSpeed;
+                if (agent != null && agent.enabled)
+                {
+                    agent.isStopped = false;
+                    agent.speed = cultistAI.runSpeed;
+                }
                 pathUpdateTimer = 0f;
                 
                 // 즉시 플레이어 위치로 목적지 설정
@@ -173,7 +182,10 @@ public class CultistStateMachine : MonoBehaviour
                 
             case AIState.Attacking:
                 isAttacking = true;
-                agent.isStopped = true;
+                if (agent != null && agent.enabled)
+                {
+                    agent.isStopped = true;
+                }
                 break;
         }
     }
@@ -204,8 +216,15 @@ public class CultistStateMachine : MonoBehaviour
         
         float distanceToPrayingSpot = Vector3.Distance(transform.position, cultistAI.prayingSpot.position);
         bool closeEnough = distanceToPrayingSpot <= 1.2f;
-        bool agentStopped = !agent.pathPending && agent.remainingDistance <= 0.8f;
-        bool velocitySlow = agent.velocity.magnitude < 0.2f;
+        
+        // NavMeshAgent 상태 안전 검사
+        bool agentStopped = false;
+        if (agent != null && agent.enabled && agent.isOnNavMesh && agent.hasPath)
+        {
+            agentStopped = !agent.pathPending && agent.remainingDistance <= 0.8f;
+        }
+        
+        bool velocitySlow = agent != null && agent.velocity.magnitude < 0.2f;
         
         if (closeEnough || (agentStopped && distanceToPrayingSpot <= 2f) || (velocitySlow && distanceToPrayingSpot <= 1.5f))
         {
@@ -310,9 +329,12 @@ public class CultistStateMachine : MonoBehaviour
             SetState(AIState.MovingToPrayingSpot);
             
             // NavMeshAgent 설정
-            agent.isStopped = false;
-            agent.speed = cultistAI.runSpeed;
-            agent.stoppingDistance = 0.1f;
+            if (agent != null && agent.enabled)
+            {
+                agent.isStopped = false;
+                agent.speed = cultistAI.runSpeed;
+                agent.stoppingDistance = 0.1f;
+            }
             
             // 목적지 설정
             Vector3 targetPosition = new Vector3(

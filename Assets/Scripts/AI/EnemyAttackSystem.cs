@@ -16,8 +16,11 @@ public class EnemyAttackSystem : MonoBehaviour
     public bool useHandAsAttackPoint = true;
     
     [Header("이펙트")]
-    public AudioClip attackSound;
     public ParticleSystem attackEffect;
+    
+    [Header("오디오 (VolumeManager 사용)")]
+    [Tooltip("VolumeManager를 통해 사운드가 재생됩니다")]
+    public bool useVolumeManager = true;
     
     [Header("디버그")]
     public bool enableDebug = true;
@@ -44,25 +47,29 @@ public class EnemyAttackSystem : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         cultistAI = GetComponent<CultistAI>();
-        audioSource = GetComponent<AudioSource>();
         
-        if (audioSource == null)
+        // VolumeManager 사용 시 AudioSource 불필요
+        if (!useVolumeManager)
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
         }
     }
     
     void FindPlayer()
     {
         // VRPlayerHealth 컴포넌트 찾기
-        playerHealth = FindAnyObjectByType<VRPlayerHealth>();
+        playerHealth = FindFirstObjectByType<VRPlayerHealth>();
         if (playerHealth != null)
         {
             player = playerHealth.transform;
             Debug.Log($"[EnemyAttackSystem] 플레이어 찾음: {player.name} (위치: {player.position})");
             
             // VRPlayerHitTarget 찾기
-            playerHitTarget = FindAnyObjectByType<VRPlayerHitTarget>();
+            playerHitTarget = FindFirstObjectByType<VRPlayerHitTarget>();
             if (playerHitTarget != null)
             {
                 Debug.Log($"[EnemyAttackSystem] 플레이어 타격 영역 찾음: {playerHitTarget.name}");
@@ -258,10 +265,15 @@ public class EnemyAttackSystem : MonoBehaviour
     /// </summary>
     private void PlayAttackEffects(Vector3 position)
     {
-        // 사운드 재생
-        if (attackSound != null && audioSource != null)
+        // 사운드 재생 (VolumeManager 사용)
+        if (useVolumeManager && VolumeManager.Instance != null)
         {
-            audioSource.PlayOneShot(attackSound, 0.7f);
+            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.EnemyAttack, position, transform);
+        }
+        else if (audioSource != null)
+        {
+            // 기존 방식 (호환성)
+            Debug.LogWarning("[EnemyAttackSystem] VolumeManager를 사용하지 않는 모드입니다.");
         }
         
         // 파티클 이펙트

@@ -1,0 +1,250 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1644113757786635539
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6506765590065278920}
+  - component: {fileID: 7951709917446013495}
+  m_Layer: 0
+  m_Name: VolumeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6506765590065278920
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644113757786635539}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7951709917446013495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644113757786635539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9405bc4aa2d5a844ea12b197e8152f0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  masterMixerGroup: {fileID: 24300002, guid: 036381f199a420d44a062c5d7ce2e4b3, type: 2}
+  bgmMixerGroup: {fileID: -1260413108688620264, guid: 036381f199a420d44a062c5d7ce2e4b3, type: 2}
+  sfxMixerGroup: {fileID: 7704109210651371450, guid: 036381f199a420d44a062c5d7ce2e4b3, type: 2}
+  spatialSfxMixerGroup: {fileID: -6190326466644282180, guid: 036381f199a420d44a062c5d7ce2e4b3, type: 2}
+  bgmAudioSource: {fileID: 0}
+  ambientAudioSource: {fileID: 0}
+  sfxAudioSources:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  maxSpatialSources: 16
+  masterVolume: 1
+  bgmVolume: 0.7
+  sfxVolume: 0.8
+  spatialSfxVolume: 0.9
+  bgmClips:
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  - bgmType: 0
+    audioClip: {fileID: 0}
+    volume: 0.7
+    loop: 1
+    isAmbient: 0
+  sfxClips:
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 0
+    audioClips: []
+    volume: 1
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  bgmFadeTime: 2
+  ambientFadeTime: 1.5
