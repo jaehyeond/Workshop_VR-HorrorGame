@@ -187,6 +187,26 @@ public class CinematicManager : MonoBehaviour
                 canvasObj.transform.position = vrCamera.position + vrCamera.forward * 4f;
                 canvasObj.transform.LookAt(vrCamera.position);
                 canvasObj.transform.rotation *= Quaternion.Euler(0, 180, 0);
+                Debug.Log("[CinematicManager] VideoCanvas VR 위치 설정 완료: " + canvasObj.transform.position);
+            }
+            else
+            {
+                // VR 카메라를 찾지 못한 경우 기본 위치
+                canvasObj.transform.position = new Vector3(0, 2, 4);
+                canvasObj.transform.rotation = Quaternion.identity;
+                Debug.LogWarning("[CinematicManager] VR 카메라를 찾지 못해 기본 위치로 설정");
+            }
+        }
+        else
+        {
+            // 기존 Canvas가 있는 경우 VR 위치 재조정
+            Transform vrCamera = FindVRCamera();
+            if (vrCamera != null)
+            {
+                videoCanvas.transform.position = vrCamera.position + vrCamera.forward * 4f;
+                videoCanvas.transform.LookAt(vrCamera.position);
+                videoCanvas.transform.rotation *= Quaternion.Euler(0, 180, 0);
+                Debug.Log("[CinematicManager] 기존 VideoCanvas VR 위치 재조정 완료");
             }
         }
 
@@ -326,14 +346,33 @@ public class CinematicManager : MonoBehaviour
         // 영상 재생
         videoPlayer.Play();
         
+        // VideoPlayer 준비 대기
+        yield return new WaitForSeconds(0.1f);
+        
+        // 영상 재생 상태 확인
+        Debug.Log("[CinematicManager] VideoPlayer 상태 - isPlaying: " + videoPlayer.isPlaying + ", isPrepared: " + videoPlayer.isPrepared);
+        
         // 이벤트 호출
         OnCinematicStarted?.Invoke(cinematicType);
 
-        // 영상 완료 대기 (또는 스킵)
-        while (videoPlayer.isPlaying && isPlayingVideo)
+        // 영상 완료 대기 (또는 스킵) - 더 안전한 조건
+        float maxWaitTime = (float)clip.length + 2f; // 영상 길이 + 여유시간
+        float elapsedTime = 0f;
+        
+        while (isPlayingVideo && elapsedTime < maxWaitTime)
         {
+            if (videoPlayer.isPlaying)
+            {
+                elapsedTime += Time.deltaTime;
+            }
+            else if (elapsedTime > 0.5f) // 0.5초 이상 재생된 후 멈추면 종료
+            {
+                break;
+            }
             yield return null;
         }
+        
+        Debug.Log("[CinematicManager] 영상 재생 종료 - 경과시간: " + elapsedTime.ToString("F1") + "초");
 
         // 영상 종료 처리
         yield return StartCoroutine(EndVideoPlayback());
