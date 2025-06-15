@@ -235,8 +235,9 @@ public class AnimationEventSetupTool : EditorWindow
     {
         string name = clip.name.ToLower();
         
-        // 더 포괄적인 공격 애니메이션 감지
+        // 더 포괄적인 공격 애니메이션 감지 (Necromancer atack1, atack2 포함)
         bool isAttack = name.Contains("attack") || 
+                       name.Contains("atack") ||  // Necromancer용 추가
                        name.Contains("melee") || 
                        name.Contains("punch") || 
                        name.Contains("hit") || 

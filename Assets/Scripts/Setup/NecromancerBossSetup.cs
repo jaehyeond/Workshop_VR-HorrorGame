@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.AI;
+using System.Collections.Generic;
 
 /// <summary>
 /// 네크로맨서 보스 설정 도구
@@ -444,6 +445,17 @@ public class NecromancerBossSetup : EditorWindow
         triggerCollider.radius = attackRange;
         triggerCollider.isTrigger = true;
         
+        // NecromancerCombatSystem을 AttackTrigger로 이동
+        NecromancerCombatSystem combatSystem = targetObject.GetComponent<NecromancerCombatSystem>();
+        if (combatSystem != null)
+        {
+            // 기존 컴포넌트 제거
+            DestroyImmediate(combatSystem);
+            
+            // AttackTrigger에 추가
+            triggerObj.AddComponent<NecromancerCombatSystem>();
+        }
+        
         Debug.Log("충돌체 설정 완료");
     }
     
@@ -476,6 +488,80 @@ public class NecromancerBossSetup : EditorWindow
         }
         
         Debug.Log("설정값 적용 완료");
+        
+        // Necromancer 애니메이션 이벤트 추가
+        AddNecromancerAnimationEvents();
+    }
+    
+    void AddNecromancerAnimationEvents()
+    {
+        if (!CanSetup()) return;
+        
+        Debug.Log("Necromancer 애니메이션 이벤트 추가 시작...");
+        
+        // Necromancer 애니메이션 클립 찾기
+        string[] animationGuids = AssetDatabase.FindAssets("Necromancer@atack", new[] { "Assets" });
+        int addedEvents = 0;
+        
+        foreach (string guid in animationGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (path.EndsWith(".fbx"))
+            {
+                Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+                foreach (Object asset in assets)
+                {
+                    if (asset is AnimationClip clip && (clip.name.Contains("atack1") || clip.name.Contains("atack2")))
+                    {
+                        if (AddAnimationEventToClip(clip, 0.6f))
+                        {
+                            addedEvents++;
+                            Debug.Log($"Animation Event 추가: {clip.name}");
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (addedEvents > 0)
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"Necromancer 애니메이션에 {addedEvents}개의 Animation Event 추가 완료!");
+        }
+        else
+        {
+            Debug.LogWarning("Necromancer 애니메이션 클립을 찾을 수 없습니다.");
+        }
+    }
+    
+    bool AddAnimationEventToClip(AnimationClip clip, float time)
+    {
+        if (clip == null) return false;
+        
+        // 기존 이벤트 확인
+        AnimationEvent[] existingEvents = AnimationUtility.GetAnimationEvents(clip);
+        foreach (var evt in existingEvents)
+        {
+            if (evt.functionName == "OnAttack1Hit")
+            {
+                Debug.Log($"{clip.name}에 이미 OnAttack1Hit 이벤트가 있습니다.");
+                return false;
+            }
+        }
+        
+        // 새 이벤트 생성
+        AnimationEvent newEvent = new AnimationEvent();
+        newEvent.time = clip.length * time; // 애니메이션의 60% 지점
+        newEvent.functionName = "OnAttack1Hit";
+        
+        // 이벤트 추가
+        List<AnimationEvent> eventList = new List<AnimationEvent>(existingEvents);
+        eventList.Add(newEvent);
+        
+        AnimationUtility.SetAnimationEvents(clip, eventList.ToArray());
+        
+        return true;
     }
     
     (NecromancerBoss boss, 

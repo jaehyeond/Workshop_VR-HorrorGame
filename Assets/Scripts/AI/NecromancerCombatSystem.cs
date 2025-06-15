@@ -62,6 +62,9 @@ public class NecromancerCombatSystem : MonoBehaviour
             animController.OnAttackHit += OnMeleeAttackHit;
         }
         
+        // 애니메이션 이벤트가 없으면 타이머로 대체
+        StartCoroutine(CheckForAnimationEvents());
+        
         CombatLog("전투 시스템 초기화 완료");
     }
     
@@ -169,7 +172,13 @@ public class NecromancerCombatSystem : MonoBehaviour
     
     #region 공격 히트 처리
     
-    // 애니메이션 이벤트에서 호출
+    // 애니메이션 이벤트에서 호출 (Enemy와 동일한 이름)
+    public void OnAttack1Hit()
+    {
+        OnMeleeAttackHit();
+    }
+    
+    // 실제 공격 처리
     private void OnMeleeAttackHit()
     {
         if (player == null || !IsPlayerInMeleeRange()) return;
@@ -239,8 +248,8 @@ public class NecromancerCombatSystem : MonoBehaviour
     
     void OnTriggerEnter(Collider other)
     {
-        // VR 도끼와의 충돌 감지
-        if (other.CompareTag(axeTag))
+        // VR 도끼와의 충돌 감지 (태그 또는 AxeWeapon 컴포넌트로 확인)
+        if (other.CompareTag(axeTag) || other.GetComponent<AxeWeapon>() != null)
         {
             HandleAxeHit(other);
         }
@@ -336,6 +345,33 @@ public class NecromancerCombatSystem : MonoBehaviour
         
         Gizmos.DrawLine(transform.position, transform.position + leftBoundary);
         Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
+    }
+    
+    #endregion
+    
+    #region 애니메이션 이벤트 대체 시스템
+    
+    private System.Collections.IEnumerator CheckForAnimationEvents()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(0.1f);
+            
+            // 공격 중이고 애니메이션이 특정 시점에 도달했을 때 히트 처리
+            if (isAttacking && animController != null)
+            {
+                // 공격 애니메이션의 중간 지점에서 히트 처리
+                AnimatorStateInfo stateInfo = animController.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0);
+                
+                // atack1 또는 atack2 애니메이션이 50% 진행되었을 때
+                if ((stateInfo.IsName("atack1") || stateInfo.IsName("atack2")) && 
+                    stateInfo.normalizedTime >= 0.5f && stateInfo.normalizedTime <= 0.6f)
+                {
+                    OnMeleeAttackHit();
+                    yield return new WaitForSeconds(1f); // 중복 호출 방지
+                }
+            }
+        }
     }
     
     #endregion
