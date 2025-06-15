@@ -15,6 +15,9 @@ EditorBuildSettings:
     path: Assets/Scenes/VideoScenes/BossIntroVideo.unity
     guid: b4b99967519b3214eafb6bcf5c49990d
   - enabled: 1
+    path: Assets/Jaehyeon/Scenes/BetaAfterBoss(Map Light).unity
+    guid: d15d8116e519d604685605f8acc06b72
+  - enabled: 1
     path: Assets/Scenes/VideoScenes/EndingVideo.unity
     guid: b0d25019593224d42a1499a133f0528e
   m_configObjects:

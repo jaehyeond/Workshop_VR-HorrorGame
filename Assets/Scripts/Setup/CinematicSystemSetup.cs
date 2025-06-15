@@ -983,5 +983,99 @@ public class CinematicSystemSetup : EditorWindow
         
         Debug.Log("OVRCameraRig structure created for Video Scene");
     }
+
+    [MenuItem("VR Horror Game/Setup BetaAfterBoss Scene")]
+    static void SetupBetaAfterBossScene()
+    {
+        Debug.Log("[CinematicSystemSetup] BetaAfterBoss 씬 설정 시작...");
+        
+        // 현재 씬이 BetaAfterBoss(Map Light)인지 확인
+        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (currentSceneName != "BetaAfterBoss(Map Light)")
+        {
+            Debug.LogWarning($"[CinematicSystemSetup] 현재 씬이 BetaAfterBoss(Map Light)가 아닙니다. 현재: {currentSceneName}");
+            Debug.Log("BetaAfterBoss(Map Light) 씬을 열고 다시 실행해주세요.");
+            return;
+        }
+        
+        // DoorD_V2 찾아서 비활성화
+        GameObject bossDoor = GameObject.Find("DoorD_V2");
+        if (bossDoor != null)
+        {
+            bossDoor.SetActive(false);
+            Debug.Log("[CinematicSystemSetup] DoorD_V2 보스문 비활성화 완료");
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicSystemSetup] DoorD_V2를 찾을 수 없습니다.");
+            
+            // 다른 가능한 이름들로 시도
+            string[] possibleDoorNames = { "DoorD_V2 (1)", "DoorD_V2 (2)" };
+            
+            foreach (string doorName in possibleDoorNames)
+            {
+                GameObject door = GameObject.Find(doorName);
+                if (door != null)
+                {
+                    door.SetActive(false);
+                    Debug.Log($"[CinematicSystemSetup] {doorName} 보스문 비활성화 완료");
+                    break;
+                }
+            }
+        }
+        
+        // 모든 적 비활성화 (보스 인트로 후에는 적이 없어야 함)
+        DisableAllEnemies();
+        
+        // 플레이어 스폰 위치를 보스룸 앞으로 설정
+        SetupPlayerSpawnAtBossRoom();
+        
+        // 씬 저장
+        #if UNITY_EDITOR
+        UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
+        Debug.Log("[CinematicSystemSetup] BetaAfterBoss 씬 설정 및 저장 완료!");
+        #endif
+    }
+    
+    static void DisableAllEnemies()
+    {
+        // CultistAI 비활성화
+        var cultistAIs = FindObjectsByType<CultistAI>(FindObjectsSortMode.None);
+        foreach (var ai in cultistAIs)
+        {
+            if (ai != null)
+            {
+                ai.gameObject.SetActive(false);
+                Debug.Log($"[CinematicSystemSetup] {ai.name} CultistAI 비활성화");
+            }
+        }
+        
+        // NecromancerBoss 비활성화 (아직 보스전이 아니므로)
+        var necromancerBoss = FindFirstObjectByType<NecromancerBoss>();
+        if (necromancerBoss != null)
+        {
+            necromancerBoss.gameObject.SetActive(false);
+            Debug.Log("[CinematicSystemSetup] NecromancerBoss 비활성화");
+        }
+        
+        Debug.Log("[CinematicSystemSetup] 모든 적 비활성화 완료");
+    }
+    
+    static void SetupPlayerSpawnAtBossRoom()
+    {
+        // PlayerSpawn 오브젝트 찾기
+        GameObject playerSpawn = GameObject.Find("PlayerSpawn");
+        if (playerSpawn != null)
+        {
+            // 보스룸 앞 위치로 이동 (DoorD_V2가 있던 위치 근처)
+            Vector3 bossRoomSpawnPosition = new Vector3(-22.881f, 3.67f, -18f); // 문 앞쪽
+            playerSpawn.transform.position = bossRoomSpawnPosition;
+            Debug.Log($"[CinematicSystemSetup] PlayerSpawn 위치를 보스룸 앞으로 이동: {bossRoomSpawnPosition}");
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicSystemSetup] PlayerSpawn 오브젝트를 찾을 수 없습니다.");
+        }
+    }
 }
 #endif 

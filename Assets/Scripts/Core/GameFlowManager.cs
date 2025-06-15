@@ -19,6 +19,7 @@ public class GameFlowManager : MonoBehaviour
     [SerializeField] private string bossIntroVideoScene = "BossIntroVideo";
     [SerializeField] private string endingVideoScene = "EndingVideo";
     [SerializeField] private string mainGameScene = "Beta(Map Light)";
+    [SerializeField] private string afterBossScene = "BetaAfterBoss(Map Light)"; // 보스 인트로 영상 후 씬
 
     public enum GameState
     {
@@ -149,18 +150,27 @@ public class GameFlowManager : MonoBehaviour
 
     void HandleMainGameScene()
     {
-        DebugLog("[GameFlowManager] MainGame Scene 처리");
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        DebugLog($"[GameFlowManager] MainGame Scene 처리: {currentSceneName}");
         
         // AI 활성화 및 BGM 설정
         StartCoroutine(SetupMainGameScene());
         
-        // 플레이어 위치 복원
-        RestorePlayerPosition();
+        // 씬별 특별 처리
+        if (currentSceneName == "BetaAfterBoss(Map Light)")
+        {
+            // BetaAfterBoss 씬: 플레이어 위치 복원 및 보스문 열기
+            RestorePlayerPosition();
+            SetupBossDoorState();
+        }
+        else if (currentSceneName == "Beta(Map Light)")
+        {
+            // 원래 Beta 씬: 기본 설정만
+            // 플레이어 위치 복원하지 않음 (PlayerSpawn에서 시작)
+            // 보스문도 열지 않음 (닫힌 상태 유지)
+        }
         
-        // Boss문 상태 설정
-        SetupBossDoorState();
-        
-        // SceneTransitionTrigger 상태 설정
+        // SceneTransitionTrigger 상태 설정 (모든 씬에서 필요)
         SetupSceneTransitionTriggers();
     }
 
@@ -263,6 +273,9 @@ public class GameFlowManager : MonoBehaviour
     {
         DebugLog("[GameFlowManager] 딸 구출됨!");
         OnDaughterRescued?.Invoke();
+        
+        // 딸 구출 후 엔딩 영상으로 전환
+        TriggerEndingVideo();
     }
 
     public void TriggerBossIntroVideo()
@@ -406,8 +419,9 @@ public class GameFlowManager : MonoBehaviour
 
     void SetupBossDoorState()
     {
-        // BossIntroVideo를 본 후에는 Boss문 열기
-        if (HasSeenBossIntro)
+        // BetaAfterBoss 씬에서만 Boss문 열기
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        if (currentSceneName == "BetaAfterBoss(Map Light)" && HasSeenBossIntro)
         {
             StartCoroutine(OpenBossDoor());
         }
@@ -417,36 +431,32 @@ public class GameFlowManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         
-        // Boss문 찾기 및 열기
-        GameObject bossDoor = GameObject.Find("BossRoomDoor");
-        if (bossDoor == null)
-        {
-            // 다른 이름으로 찾기
-            bossDoor = GameObject.Find("Door");
-        }
+        // DoorD_V2 보스문 찾기
+        GameObject bossDoor = GameObject.Find("DoorD_V2");
         
         if (bossDoor != null)
         {
-            // 문 열기 (Animator가 있는 경우)
-            Animator doorAnimator = bossDoor.GetComponent<Animator>();
-            if (doorAnimator != null)
-            {
-                doorAnimator.SetBool("IsOpen", true);
-                doorAnimator.SetTrigger("Open");
-            }
-            
-            // 문 비활성화 (Collider가 있는 경우)
-            Collider doorCollider = bossDoor.GetComponent<Collider>();
-            if (doorCollider != null)
-            {
-                doorCollider.enabled = false;
-            }
-            
-            DebugLog("[GameFlowManager] Boss문 열림");
+            // 문 오브젝트 비활성화 (문이 사라져서 지나갈 수 있게 됨)
+            bossDoor.SetActive(false);
+            DebugLog("[GameFlowManager] DoorD_V2 보스문 비활성화 완료");
         }
         else
         {
-            DebugLog("[GameFlowManager] Boss문을 찾을 수 없음");
+            DebugLog("[GameFlowManager] DoorD_V2 보스문을 찾을 수 없음");
+            
+            // 다른 가능한 이름들로 시도
+            string[] possibleDoorNames = { "DoorD_V2 (1)", "DoorD_V2 (2)", "BossRoomDoor", "Door" };
+            
+            foreach (string doorName in possibleDoorNames)
+            {
+                GameObject door = GameObject.Find(doorName);
+                if (door != null)
+                {
+                    door.SetActive(false);
+                    DebugLog($"[GameFlowManager] {doorName} 보스문 비활성화 완료");
+                    break;
+                }
+            }
         }
     }
 

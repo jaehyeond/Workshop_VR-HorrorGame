@@ -25,10 +25,18 @@ public class SceneTransitionTrigger : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (hasTriggered) return;
+        Debug.Log($"[SceneTransitionTrigger] 트리거 진입: {other.name} (태그: {other.tag})");
+        
+        if (hasTriggered) 
+        {
+            Debug.Log($"[SceneTransitionTrigger] 이미 트리거됨 - 무시");
+            return;
+        }
         
         if (IsValidPlayer(other))
         {
+            Debug.Log($"[SceneTransitionTrigger] 유효한 플레이어 감지: {other.name}");
+            
             // 조건 확인
             if (requiresCondition && !CheckCondition())
             {
@@ -40,6 +48,10 @@ public class SceneTransitionTrigger : MonoBehaviour
             
             hasTriggered = true;
             ExecuteTrigger();
+        }
+        else
+        {
+            Debug.Log($"[SceneTransitionTrigger] 유효하지 않은 플레이어: {other.name}");
         }
     }
 
@@ -82,19 +94,39 @@ public class SceneTransitionTrigger : MonoBehaviour
 
     bool CheckCondition()
     {
-        if (GameFlowManager.Instance == null) return false;
+        if (GameFlowManager.Instance == null) 
+        {
+            Debug.LogError("[SceneTransitionTrigger] GameFlowManager.Instance가 null입니다!");
+            return false;
+        }
 
         switch (triggerType)
         {
             case TriggerType.BossIntroVideo:
                 // 인트로를 봤고, 아직 보스 인트로를 보지 않았을 때
-                return GameFlowManager.Instance.HasSeenIntro && 
-                       !GameFlowManager.Instance.HasSeenBossIntro;
+                bool hasSeenIntro = GameFlowManager.Instance.HasSeenIntro;
+                bool hasSeenBossIntro = GameFlowManager.Instance.HasSeenBossIntro;
+                bool condition = hasSeenIntro && !hasSeenBossIntro;
+                
+                Debug.Log($"[SceneTransitionTrigger] BossIntroVideo 조건 체크:");
+                Debug.Log($"  - HasSeenIntro: {hasSeenIntro}");
+                Debug.Log($"  - HasSeenBossIntro: {hasSeenBossIntro}");
+                Debug.Log($"  - 조건 결과: {condition}");
+                
+                return condition;
                 
             case TriggerType.EndingVideo:
                 // 보스가 처치되었고, 아직 엔딩을 보지 않았을 때
-                return GameFlowManager.Instance.IsBossDefeated && 
-                       !GameFlowManager.Instance.HasSeenEnding;
+                bool isBossDefeated = GameFlowManager.Instance.IsBossDefeated;
+                bool hasSeenEnding = GameFlowManager.Instance.HasSeenEnding;
+                bool endingCondition = isBossDefeated && !hasSeenEnding;
+                
+                Debug.Log($"[SceneTransitionTrigger] EndingVideo 조건 체크:");
+                Debug.Log($"  - IsBossDefeated: {isBossDefeated}");
+                Debug.Log($"  - HasSeenEnding: {hasSeenEnding}");
+                Debug.Log($"  - 조건 결과: {endingCondition}");
+                
+                return endingCondition;
                 
             default:
                 return true;

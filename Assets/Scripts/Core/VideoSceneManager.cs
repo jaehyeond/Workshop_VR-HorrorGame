@@ -258,16 +258,23 @@ public class VideoSceneManager : MonoBehaviour
         // VR 최적화 설정
         videoPlayer.playOnAwake = false; // 수동 제어
         videoPlayer.isLooping = false;
-        videoPlayer.skipOnDrop = true;
+        videoPlayer.skipOnDrop = false; // VR에서는 프레임 드롭 허용하지 않음
         videoPlayer.waitForFirstFrame = true;
+        
+        // VR 성능 최적화
+        videoPlayer.timeUpdateMode = VideoTimeUpdateMode.GameTime;
+        videoPlayer.playbackSpeed = 1.0f;
         
         // RenderTexture 모드 확인
         if (videoPlayer.renderMode == VideoRenderMode.RenderTexture)
         {
             if (videoPlayer.targetTexture == null)
             {
-                // RenderTexture 생성
+                // VR 최적화된 RenderTexture 생성
                 RenderTexture renderTexture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32);
+                renderTexture.antiAliasing = 1; // VR에서는 안티앨리어싱 최소화
+                renderTexture.filterMode = FilterMode.Bilinear;
+                renderTexture.wrapMode = TextureWrapMode.Clamp;
                 renderTexture.Create();
                 videoPlayer.targetTexture = renderTexture;
                 
@@ -277,17 +284,21 @@ public class VideoSceneManager : MonoBehaviour
                     videoScreen.texture = renderTexture;
                 }
                 
-                Debug.Log("[VideoSceneManager] RenderTexture 생성 및 할당 완료");
+                Debug.Log("[VideoSceneManager] VR 최적화된 RenderTexture 생성 및 할당 완료");
             }
         }
 
-        // AudioSource 설정
+        // AudioSource 설정 (VR 최적화)
         AudioSource audioSource = videoPlayer.GetComponent<AudioSource>();
         if (audioSource != null)
         {
             audioSource.spatialBlend = 0f; // 2D 사운드
-            audioSource.volume = 1f;
-            Debug.Log("[VideoSceneManager] AudioSource 설정 완료");
+            audioSource.volume = 0.8f; // 볼륨 약간 낮춤
+            audioSource.priority = 128; // 기본 우선순위
+            audioSource.dopplerLevel = 0f; // VR에서는 도플러 효과 비활성화
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            
+            Debug.Log("[VideoSceneManager] VR 최적화된 AudioSource 설정 완료");
         }
     }
 
@@ -296,12 +307,15 @@ public class VideoSceneManager : MonoBehaviour
         float videoLength = (float)videoPlayer.clip.length;
         float elapsedTime = 0f;
         float lastLogTime = 0f;
+        int retryCount = 0;
+        const int maxRetries = 3;
 
         while (elapsedTime < videoLength + 1f && !isTransitioning)
         {
             if (videoPlayer.isPlaying)
             {
                 elapsedTime += Time.deltaTime;
+                retryCount = 0; // 재생 중이면 재시도 카운트 리셋
                 
                 // 5초마다 진행상황 로그
                 if (elapsedTime - lastLogTime >= 5f)
@@ -320,12 +334,20 @@ public class VideoSceneManager : MonoBehaviour
                 }
                 else if (elapsedTime > 1f) // 1초 이후에 멈췄다면 문제
                 {
-                    Debug.LogWarning($"[VideoSceneManager] 영상이 예상치 못하게 멈춤 (진행시간: {elapsedTime:F1}초)");
-                    yield return new WaitForSeconds(1f);
+                    retryCount++;
+                    Debug.LogWarning($"[VideoSceneManager] 영상이 예상치 못하게 멈춤 (진행시간: {elapsedTime:F1}초, 재시도: {retryCount}/{maxRetries})");
                     
-                    if (!videoPlayer.isPlaying)
+                    if (retryCount <= maxRetries)
                     {
-                        Debug.LogError("[VideoSceneManager] 영상 재생 중단됨 - Scene 전환");
+                        // 영상 재시작 시도
+                        Debug.Log("[VideoSceneManager] 영상 재시작 시도...");
+                        videoPlayer.time = elapsedTime;
+                        videoPlayer.Play();
+                        yield return new WaitForSeconds(0.5f);
+                    }
+                    else
+                    {
+                        Debug.LogError("[VideoSceneManager] 영상 재생 중단됨 - 최대 재시도 초과, Scene 전환");
                         break;
                     }
                 }
@@ -333,6 +355,9 @@ public class VideoSceneManager : MonoBehaviour
 
             yield return null;
         }
+        
+        // 영상 완료 후 Scene 전환
+        TransitionToNextScene();
     }
 
     void SkipVideo()
@@ -351,7 +376,30 @@ public class VideoSceneManager : MonoBehaviour
 
         isTransitioning = true;
         
-        Debug.Log($"[VideoSceneManager] Scene 전환: {SceneManager.GetActiveScene().name} → {nextSceneName}");
+        // 현재 씬에 따라 다음 씬 결정
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        string targetSceneName = nextSceneName; // 기본값
+        
+        switch (currentSceneName)
+        {
+            case "IntroVideo":
+                targetSceneName = "Beta(Map Light)"; // 첫 번째 게임 씬
+                break;
+                
+            case "BossIntroVideo":
+                targetSceneName = "BetaAfterBoss(Map Light)"; // 보스 인트로 후 씬 (문이 열린 상태)
+                break;
+                
+            case "EndingVideo":
+                targetSceneName = "Beta(Map Light)"; // 또는 메인 메뉴
+                break;
+                
+            default:
+                targetSceneName = nextSceneName; // Inspector에서 설정한 기본값 사용
+                break;
+        }
+        
+        Debug.Log($"[VideoSceneManager] Scene 전환: {currentSceneName} → {targetSceneName}");
         
         // VideoPlayer 정리
         if (videoPlayer != null && videoPlayer.isPlaying)
@@ -363,7 +411,7 @@ public class VideoSceneManager : MonoBehaviour
         NotifyVideoCompleted();
         
         // Scene 전환
-        SceneManager.LoadScene(nextSceneName);
+        SceneManager.LoadScene(targetSceneName);
     }
 
     #endregion
