@@ -22,7 +22,7 @@ TagManager:
   - Player
   - Grabbable
   - Scenario
-  - 
+  - Boss
   - Character
   - MirroredCharacter
   - env

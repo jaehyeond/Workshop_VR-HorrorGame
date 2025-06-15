@@ -324,9 +324,24 @@ public class AxeWeapon : MonoBehaviour
                 lastAttackTime = Time.time;
                 break; // 한 번에 하나씩만 타격
             }
-            else
+            
+            // 네크로맨서 보스 타격 처리
+            NecromancerBoss necromancerBoss = hitCollider.GetComponent<NecromancerBoss>();
+            if (necromancerBoss != null)
             {
-                //Debug.Log($"[AxeWeapon] {hitCollider.name}에는 CultistAI 컴포넌트가 없음");
+                Debug.Log($"[AxeWeapon] ===== 네크로맨서 보스 발견: {necromancerBoss.name} =====");
+                HitNecromancerBoss(necromancerBoss, swingSpeed);
+                lastAttackTime = Time.time;
+                break; // 한 번에 하나씩만 타격
+            }
+            
+            // 일반 적 감지 (다른 보스들을 위한 확장성)
+            if (hitCollider.CompareTag("Enemy") || hitCollider.CompareTag("Boss"))
+            {
+                Debug.Log($"[AxeWeapon] 태그 기반 적 발견: {hitCollider.name}");
+                HitGenericEnemy(hitCollider, swingSpeed);
+                lastAttackTime = Time.time;
+                break;
             }
         }
         
@@ -361,6 +376,57 @@ public class AxeWeapon : MonoBehaviour
         
         string hitType = isCriticalHit ? "치명타" : "일반 타격";
         //Debug.Log($"[AxeWeapon] {cultist.name}에게 {hitType}! 데미지: {finalDamage}");
+    }
+    
+    private void HitNecromancerBoss(NecromancerBoss boss, float swingSpeed)
+    {
+        // 기본 50 데미지
+        float finalDamage = baseDamage;
+        
+        // 치명타 판정 (높은 속도로 휘둘렀을 때)
+        bool isCriticalHit = swingSpeed > minSwingVelocity * 1.5f;
+        if (isCriticalHit)
+        {
+            finalDamage *= 1.5f; // 치명타는 1.5배 데미지
+        }
+        
+        Debug.Log($"[AxeWeapon] 네크로맨서 보스에게 최종 데미지: {finalDamage}");
+        
+        // 보스에게 데미지 전달
+        boss.TakeDamage(finalDamage, transform.position);
+        
+        // 기본 효과 재생
+        PlayHitEffects(isCriticalHit);
+        
+        // 햅틱 피드백
+        TriggerHapticFeedback(isCriticalHit);
+        
+        string hitType = isCriticalHit ? "치명타" : "일반 타격";
+        Debug.Log($"[AxeWeapon] {boss.name}에게 {hitType}! 데미지: {finalDamage}");
+    }
+    
+    private void HitGenericEnemy(Collider enemyCollider, float swingSpeed)
+    {
+        // 일반적인 적 처리 (확장성을 위해)
+        float finalDamage = baseDamage;
+        
+        // 치명타 판정
+        bool isCriticalHit = swingSpeed > minSwingVelocity * 1.5f;
+        if (isCriticalHit)
+        {
+            finalDamage *= 1.5f;
+        }
+        
+        Debug.Log($"[AxeWeapon] 일반 적에게 데미지: {finalDamage}");
+        
+        // 기본 효과 재생
+        PlayHitEffects(isCriticalHit);
+        
+        // 햅틱 피드백
+        TriggerHapticFeedback(isCriticalHit);
+        
+        string hitType = isCriticalHit ? "치명타" : "일반 타격";
+        Debug.Log($"[AxeWeapon] {enemyCollider.name}에게 {hitType}! 데미지: {finalDamage}");
     }
     
     private void PlayHitEffects(bool isCriticalHit)

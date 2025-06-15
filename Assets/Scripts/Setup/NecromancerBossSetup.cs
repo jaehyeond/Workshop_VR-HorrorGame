@@ -519,6 +519,13 @@ public class NecromancerBossSetup : EditorWindow
         mainCollider.height = 2f;
         mainCollider.isTrigger = false;
         
+        // Boss 태그 설정 (AxeWeapon 감지용)
+        if (!targetObject.CompareTag("Boss"))
+        {
+            targetObject.tag = "Boss";
+            Debug.Log("Boss 태그 설정 완료");
+        }
+        
         // 공격 감지용 트리거 (구체)
         GameObject triggerObj = new GameObject("AttackTrigger");
         triggerObj.transform.SetParent(targetObject.transform);
