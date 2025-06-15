@@ -28,14 +28,14 @@ public class MixamoAnimationEventFixer : EditorWindow
 
         GUILayout.Space(15);
 
-        if (GUILayout.Button("🎯 모든 보스 공격 애니메이션 복사 및 이벤트 추가", GUILayout.Height(40)))
+        if (GUILayout.Button("모든 보스 공격 애니메이션 복사 및 이벤트 추가", GUILayout.Height(40)))
         {
             CreateAllBossAttackAnimations();
         }
 
         GUILayout.Space(10);
 
-        if (GUILayout.Button("📋 모든 보스 Animator Controller 업데이트", GUILayout.Height(30)))
+        if (GUILayout.Button("모든 보스 Animator Controller 업데이트", GUILayout.Height(30)))
         {
             UpdateAllBossAnimatorControllers();
         }
@@ -128,7 +128,7 @@ public class MixamoAnimationEventFixer : EditorWindow
         AssetDatabase.Refresh();
         
         EditorUtility.DisplayDialog("완료!", 
-            $"🎯 {createdCount}개의 보스 공격 애니메이션이 생성되었습니다!\n\n" +
+            $"{createdCount}개의 보스 공격 애니메이션이 생성되었습니다!\n\n" +
             $"생성된 파일들:\n{createdList}\n" +
             "이제 '모든 보스 Animator Controller 업데이트'를 클릭하세요.", "확인");
     }
@@ -283,7 +283,7 @@ public class MixamoAnimationEventFixer : EditorWindow
         AssetDatabase.Refresh();
 
         EditorUtility.DisplayDialog("완료!", 
-            $"🎯 {updatedCount}개의 보스 Animator Controller가 업데이트되었습니다!\n\n" +
+            $"{updatedCount}개의 보스 Animator Controller가 업데이트되었습니다!\n\n" +
             $"업데이트 내역:\n{updateLog}\n" +
             "이제 각 보스가 고유한 Attack1, Attack2 애니메이션을 사용하며,\n" +
             "OnAttack1Hit + OnAttackComplete 이벤트가 정상 작동합니다!", "확인");
@@ -367,7 +367,7 @@ public class MixamoAnimationEventFixer : EditorWindow
         AssetDatabase.Refresh();
 
         EditorUtility.DisplayDialog("완료!", 
-            $"🎯 {updatedCount}개의 Enemy Animator Controller가 업데이트되었습니다!\n\n" +
+            $"{updatedCount}개의 Enemy Animator Controller가 업데이트되었습니다!\n\n" +
             "이제 Enemy의 Attack1에서 OnAttack1Hit 이벤트가 정상 작동합니다!", "확인");
     }
 
