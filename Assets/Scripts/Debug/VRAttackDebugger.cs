@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using TMPro;
 
 /// <summary>
@@ -15,9 +14,6 @@ public class VRAttackDebugger : MonoBehaviour
     [Header("테스트 설정")]
     public float testDamageAmount = 25f;
     
-    // New Input System (T키만 유지)
-    private InputAction testDamageAction;
-    
     // 참조
     private VRPlayerHealth vrPlayerHealth;
     private VRPostProcessingManager postProcessingManager;
@@ -32,26 +28,16 @@ public class VRAttackDebugger : MonoBehaviour
     {
         FindComponents();
         CreateDebugUI();
-        SetupInputSystem();
-    }
-    
-    void OnEnable()
-    {
-        testDamageAction?.Enable();
-    }
-    
-    void OnDisable()
-    {
-        testDamageAction?.Disable();
-    }
-    
-    void OnDestroy()
-    {
-        testDamageAction?.Dispose();
     }
     
     void Update()
     {
+        // T키 입력 체크 (기존 Input Manager 방식)
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            TestDamageEffect();
+        }
+        
         if (!enableDebugUI) return; // Debug UI가 비활성화되면 Update 로직 스킵
         
         UpdateDebugInfo();
@@ -77,28 +63,7 @@ public class VRAttackDebugger : MonoBehaviour
         Debug.Log($"  - OVRCameraRig: {(cameraRig != null ? "OK" : "MISSING")}");
     }
     
-    /// <summary>
-    /// Unity 6 New Input System 설정 (T키만)
-    /// </summary>
-    void SetupInputSystem()
-    {
-        // T키로 테스트 데미지 트리거
-        testDamageAction = new InputAction("TestDamage", InputActionType.Button);
-        testDamageAction.AddBinding("<Keyboard>/t");
-        
-        testDamageAction.performed += OnTestDamagePerformed;
-        testDamageAction.Enable();
-        
-        Debug.Log("[VRAttackDebugger] New Input System 설정 완료! [T] 키로 테스트 가능");
-    }
-    
-    /// <summary>
-    /// T키 콜백
-    /// </summary>
-    void OnTestDamagePerformed(InputAction.CallbackContext context)
-    {
-        TestDamageEffect();
-    }
+
     
     /// <summary>
     /// 디버그 UI 생성
@@ -185,7 +150,7 @@ public class VRAttackDebugger : MonoBehaviour
         
         // 6. 테스트 가이드
         debugInfo += "[Test Methods]\n";
-        debugInfo += "  [T] Key = VR Damage Effect Test\n";
+        debugInfo += "  [T] Key = VR Damage Effect Test (Legacy Input)\n";
         debugInfo += "  Inspector 'Test VR Damage Effect' Button\n";
         debugInfo += "  Enemy Approach + Attack1 Animation (Auto)\n";
     }

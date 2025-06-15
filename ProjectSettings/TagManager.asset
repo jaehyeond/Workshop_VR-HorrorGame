@@ -9,6 +9,8 @@ TagManager:
   - Player
   - Enemy
   - VRPlayer
+  - CinematicTrigger
+  - Daughter
   layers:
   - Default
   - TransparentFX
