@@ -11,6 +11,7 @@ TagManager:
   - VRPlayer
   - CinematicTrigger
   - Daughter
+  - Axe
   layers:
   - Default
   - TransparentFX

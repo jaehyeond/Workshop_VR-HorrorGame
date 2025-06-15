@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.AI;
 using System.Collections.Generic;
+using UnityEditor.Animations;
 
 /// <summary>
 /// 네크로맨서 보스 설정 도구
@@ -154,11 +155,19 @@ public class NecromancerBossSetup : EditorWindow
     {
         GUILayout.Label("4. 설정 실행", EditorStyles.boldLabel);
         
-        GUI.enabled = CanSetup();
+        EditorGUI.BeginDisabledGroup(!CanSetup());
         
         if (GUILayout.Button("완전한 네크로맨서 보스 설정", GUILayout.Height(30)))
         {
-            SetupCompleteBoss();
+            try
+            {
+                SetupCompleteBoss();
+                Repaint();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"보스 설정 중 오류: {e.Message}");
+            }
         }
         
         GUILayout.Space(5);
@@ -167,12 +176,28 @@ public class NecromancerBossSetup : EditorWindow
         
         if (GUILayout.Button("기본 컴포넌트만"))
         {
-            SetupBasicComponents();
+            try
+            {
+                SetupBasicComponents();
+                Repaint();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"컴포넌트 설정 중 오류: {e.Message}");
+            }
         }
         
         if (GUILayout.Button("애니메이션 설정"))
         {
-            SetupAnimationController();
+            try
+            {
+                SetupAnimationController();
+                Repaint();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"애니메이션 설정 중 오류: {e.Message}");
+            }
         }
         
         GUILayout.EndHorizontal();
@@ -181,17 +206,51 @@ public class NecromancerBossSetup : EditorWindow
         
         if (GUILayout.Button("NavMesh 설정"))
         {
-            SetupNavMeshAgent();
+            try
+            {
+                SetupNavMeshAgent();
+                Repaint();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"NavMesh 설정 중 오류: {e.Message}");
+            }
         }
         
         if (GUILayout.Button("충돌체 설정"))
         {
-            SetupColliders();
+            try
+            {
+                SetupColliders();
+                Repaint();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"충돌체 설정 중 오류: {e.Message}");
+            }
         }
         
         GUILayout.EndHorizontal();
         
-        GUI.enabled = true;
+        GUILayout.Space(5);
+        
+        // 애니메이션 이벤트 생성 버튼
+        GUI.backgroundColor = Color.cyan;
+        if (GUILayout.Button("애니메이션 이벤트 생성 (WithEvent 파일)", GUILayout.Height(25)))
+        {
+            try
+            {
+                AddNecromancerAnimationEvents();
+                Repaint();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"애니메이션 이벤트 생성 중 오류: {e.Message}");
+            }
+        }
+        GUI.backgroundColor = Color.white;
+        
+        EditorGUI.EndDisabledGroup();
     }
     
     void DrawStatusInfo()
@@ -237,7 +296,17 @@ public class NecromancerBossSetup : EditorWindow
     
     bool CanSetup()
     {
-        return necromancerPrefab != null && targetObject != null;
+        try
+        {
+            return necromancerPrefab != null && 
+                   targetObject != null && 
+                   !EditorApplication.isPlaying &&
+                   !EditorApplication.isCompiling;
+        }
+        catch
+        {
+            return false;
+        }
     }
     
     void FindNecromancerPrefab()
@@ -261,25 +330,39 @@ public class NecromancerBossSetup : EditorWindow
     {
         if (!CanSetup()) return;
         
-        Undo.RecordObject(targetObject, "Setup Necromancer Boss");
+        try
+        {
+            Undo.RecordObject(targetObject, "Setup Necromancer Boss");
+            
+            // 1. 기본 컴포넌트 설정
+            SetupBasicComponents();
+            
+            // 2. 애니메이션 설정
+            SetupAnimationController();
+            
+            // 3. NavMesh 설정
+            SetupNavMeshAgent();
+            
+            // 4. 충돌체 설정
+            SetupColliders();
+            
+                    // 5. 애니메이션 이벤트 추가
+        AddNecromancerAnimationEvents();
         
-        // 1. 기본 컴포넌트 설정
-        SetupBasicComponents();
-        
-        // 2. 애니메이션 설정
-        SetupAnimationController();
-        
-        // 3. NavMesh 설정
-        SetupNavMeshAgent();
-        
-        // 4. 충돌체 설정
-        SetupColliders();
-        
-        // 5. 설정값 적용
+        // 6. 설정값 적용
         ApplySettings();
         
-        Debug.Log($"네크로맨서 보스 설정 완료: {targetObject.name}");
+        // 7. 변경사항 저장
         EditorUtility.SetDirty(targetObject);
+        AssetDatabase.SaveAssets();
+            
+            Debug.Log($"네크로맨서 보스 설정 완료: {targetObject.name}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"네크로맨서 보스 설정 중 오류 발생: {e.Message}");
+            Debug.LogError($"스택 트레이스: {e.StackTrace}");
+        }
     }
     
     void SetupBasicComponents()
@@ -445,15 +528,13 @@ public class NecromancerBossSetup : EditorWindow
         triggerCollider.radius = attackRange;
         triggerCollider.isTrigger = true;
         
-        // NecromancerCombatSystem을 AttackTrigger로 이동
+        // NecromancerCombatSystem은 메인 오브젝트에 유지 (Enemy와 동일한 구조)
+        // Animation Event가 Animator와 같은 오브젝트의 컴포넌트에서만 호출되기 때문
         NecromancerCombatSystem combatSystem = targetObject.GetComponent<NecromancerCombatSystem>();
-        if (combatSystem != null)
+        if (combatSystem == null)
         {
-            // 기존 컴포넌트 제거
-            DestroyImmediate(combatSystem);
-            
-            // AttackTrigger에 추가
-            triggerObj.AddComponent<NecromancerCombatSystem>();
+            // 메인 오브젝트에 추가
+            targetObject.AddComponent<NecromancerCombatSystem>();
         }
         
         Debug.Log("충돌체 설정 완료");
@@ -495,73 +576,179 @@ public class NecromancerBossSetup : EditorWindow
     
     void AddNecromancerAnimationEvents()
     {
-        if (!CanSetup()) return;
-        
-        Debug.Log("Necromancer 애니메이션 이벤트 추가 시작...");
-        
-        // Necromancer 애니메이션 클립 찾기
-        string[] animationGuids = AssetDatabase.FindAssets("Necromancer@atack", new[] { "Assets" });
-        int addedEvents = 0;
-        
-        foreach (string guid in animationGuids)
+        try
         {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (path.EndsWith(".fbx"))
-            {
-                Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
-                foreach (Object asset in assets)
-                {
-                    if (asset is AnimationClip clip && (clip.name.Contains("atack1") || clip.name.Contains("atack2")))
-                    {
-                        if (AddAnimationEventToClip(clip, 0.6f))
-                        {
-                            addedEvents++;
-                            Debug.Log($"Animation Event 추가: {clip.name}");
-                        }
-                    }
-                }
-            }
+            Debug.Log("네크로맨서 애니메이션 이벤트 추가 시작...");
+            
+            // FBX 파일에서 WithEvent 애니메이션 파일 생성
+            CreateAnimationWithEvents("atack1", 1.2f);
+            CreateAnimationWithEvents("atack2", 1.0f);
+            
+            Debug.Log("네크로맨서 애니메이션 이벤트 추가 완료");
         }
-        
-        if (addedEvents > 0)
+        catch (System.Exception e)
         {
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            Debug.Log($"Necromancer 애니메이션에 {addedEvents}개의 Animation Event 추가 완료!");
-        }
-        else
-        {
-            Debug.LogWarning("Necromancer 애니메이션 클립을 찾을 수 없습니다.");
+            Debug.LogError($"애니메이션 이벤트 추가 중 오류: {e.Message}");
         }
     }
     
-    bool AddAnimationEventToClip(AnimationClip clip, float time)
+    void CreateAnimationWithEvents(string animationName, float eventTime)
     {
-        if (clip == null) return false;
-        
-        // 기존 이벤트 확인
-        AnimationEvent[] existingEvents = AnimationUtility.GetAnimationEvents(clip);
-        foreach (var evt in existingEvents)
+        try
         {
-            if (evt.functionName == "OnAttack1Hit")
+            // 1. 네크로맨서 FBX 파일 찾기
+            Debug.Log($"'{animationName}' 애니메이션 검색 시작...");
+            
+            // 먼저 모든 네크로맨서 관련 파일 검색
+            string[] allGuids = AssetDatabase.FindAssets("Necromancer t:Object", new[] { "Assets/Necromanser" });
+            AnimationClip originalClip = null;
+            string fbxPath = "";
+            
+            foreach (string guid in allGuids)
             {
-                Debug.Log($"{clip.name}에 이미 OnAttack1Hit 이벤트가 있습니다.");
-                return false;
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.EndsWith(".fbx") && path.Contains(animationName))
+                {
+                    fbxPath = path;
+                    Debug.Log($"FBX 파일 확인: {path}");
+                    
+                    // FBX 파일 내부의 모든 에셋 로드
+                    Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+                    Debug.Log($"FBX 내부 에셋 개수: {assets.Length}");
+                    
+                    foreach (Object asset in assets)
+                    {
+                        if (asset is AnimationClip clip)
+                        {
+                            Debug.Log($"발견된 애니메이션 클립: {clip.name}");
+                            if (clip.name == animationName)
+                            {
+                                originalClip = clip;
+                                Debug.Log($"✓ 매칭된 애니메이션: {clip.name} (경로: {path})");
+                                break;
+                            }
+                        }
+                    }
+                    if (originalClip != null) break;
+                }
+            }
+            
+            if (originalClip == null)
+            {
+                Debug.LogWarning($"{animationName} 애니메이션을 찾을 수 없습니다. FBX 파일을 확인해주세요.");
+                return;
+            }
+            
+            // 2. 새로운 애니메이션 파일 경로
+            string newPath = $"Assets/Animations/BossAttacks/{animationName}_WithEvent.anim";
+            
+            // 3. 디렉토리 생성
+            string directory = System.IO.Path.GetDirectoryName(newPath);
+            if (!System.IO.Directory.Exists(directory))
+            {
+                System.IO.Directory.CreateDirectory(directory);
+            }
+            
+            // 4. 기존 파일이 있으면 삭제
+            if (System.IO.File.Exists(newPath))
+            {
+                AssetDatabase.DeleteAsset(newPath);
+            }
+            
+            // 5. 새로운 애니메이션 클립 생성
+            AnimationClip newClip = new AnimationClip();
+            newClip.name = $"{animationName}_WithEvent";
+            
+            // 6. 원본 클립의 설정 복사
+            EditorUtility.CopySerialized(originalClip, newClip);
+            
+            // 7. Animation Event 추가
+            AnimationEvent attackEvent = new AnimationEvent();
+            attackEvent.time = eventTime;
+            attackEvent.functionName = "OnAttack1Hit";
+            
+            AnimationEvent completeEvent = new AnimationEvent();
+            completeEvent.time = originalClip.length * 0.9f;
+            completeEvent.functionName = "OnAttackComplete";
+            
+            // 8. 이벤트 배열 설정
+            AnimationEvent[] events = { attackEvent, completeEvent };
+            AnimationUtility.SetAnimationEvents(newClip, events);
+            
+            // 9. 파일로 저장
+            AssetDatabase.CreateAsset(newClip, newPath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            
+            Debug.Log($"{animationName}_WithEvent.anim 생성 완료: {newPath}");
+            
+            // 10. 애니메이션 컨트롤러 업데이트
+            UpdateAnimatorController(animationName, newClip);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"{animationName} WithEvent 생성 중 오류: {e.Message}");
+        }
+    }
+    
+    void UpdateAnimatorController(string originalAnimationName, AnimationClip newClip)
+    {
+        try
+        {
+            // 네크로맨서 애니메이션 컨트롤러 찾기
+            string[] controllerGuids = AssetDatabase.FindAssets("Necromanser Animator Controller t:AnimatorController");
+            if (controllerGuids.Length == 0)
+            {
+                Debug.LogWarning("네크로맨서 애니메이션 컨트롤러를 찾을 수 없습니다.");
+                return;
+            }
+            
+            string controllerPath = AssetDatabase.GUIDToAssetPath(controllerGuids[0]);
+            UnityEditor.Animations.AnimatorController controller = AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(controllerPath);
+            
+            if (controller == null)
+            {
+                Debug.LogWarning("애니메이션 컨트롤러를 로드할 수 없습니다.");
+                return;
+            }
+            
+            // 모든 레이어의 상태를 확인하고 업데이트
+            foreach (var layer in controller.layers)
+            {
+                UpdateStatesInStateMachine(layer.stateMachine, originalAnimationName, newClip);
+            }
+            
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+            
+            Debug.Log($"애니메이션 컨트롤러에서 {originalAnimationName} → {newClip.name} 업데이트 완료");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"애니메이션 컨트롤러 업데이트 중 오류: {e.Message}");
+        }
+    }
+    
+    void UpdateStatesInStateMachine(UnityEditor.Animations.AnimatorStateMachine stateMachine, string originalAnimationName, AnimationClip newClip)
+    {
+        // 현재 상태 머신의 모든 상태 확인
+        foreach (var state in stateMachine.states)
+        {
+            if (state.state.motion != null && 
+                (state.state.motion.name == originalAnimationName || 
+                 state.state.motion.name.Contains(originalAnimationName) ||
+                 state.state.name.ToLower().Contains(originalAnimationName.ToLower())))
+            {
+                state.state.motion = newClip;
+                Debug.Log($"상태 '{state.state.name}'의 애니메이션을 {newClip.name}으로 업데이트");
             }
         }
         
-        // 새 이벤트 생성
-        AnimationEvent newEvent = new AnimationEvent();
-        newEvent.time = clip.length * time; // 애니메이션의 60% 지점
-        newEvent.functionName = "OnAttack1Hit";
-        
-        // 이벤트 추가
-        List<AnimationEvent> eventList = new List<AnimationEvent>(existingEvents);
-        eventList.Add(newEvent);
-        
-        AnimationUtility.SetAnimationEvents(clip, eventList.ToArray());
-        
-        return true;
+        // 하위 상태 머신도 재귀적으로 확인
+        foreach (var childStateMachine in stateMachine.stateMachines)
+        {
+            UpdateStatesInStateMachine(childStateMachine.stateMachine, originalAnimationName, newClip);
+        }
     }
     
     (NecromancerBoss boss, 
