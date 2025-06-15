@@ -65,19 +65,19 @@ MonoBehaviour:
   sfxVolume: 0.8
   spatialSfxVolume: 0.9
   bgmClips:
-  - bgmType: 0
-    audioClip: {fileID: 0}
-    volume: 0.7
+  - bgmType: 2
+    audioClip: {fileID: 8300000, guid: 5849df09e2e749f43b6fc8754410853d, type: 3}
+    volume: 0.5
     loop: 1
     isAmbient: 0
-  - bgmType: 0
-    audioClip: {fileID: 0}
-    volume: 0.7
+  - bgmType: 3
+    audioClip: {fileID: 8300000, guid: fbc85ccf6c509824393dd754055a8c4e, type: 3}
+    volume: 0.5
     loop: 1
     isAmbient: 0
-  - bgmType: 0
-    audioClip: {fileID: 0}
-    volume: 0.7
+  - bgmType: 4
+    audioClip: {fileID: 8300000, guid: 2cd6e2bee417de34ebe8b003dc38bb1d, type: 3}
+    volume: 0.5
     loop: 1
     isAmbient: 0
   - bgmType: 0
@@ -107,34 +107,38 @@ MonoBehaviour:
     isAmbient: 0
   sfxClips:
   - sfxType: 0
-    audioClips: []
+    audioClips:
+    - {fileID: 8300000, guid: 50f9fff4b94035a48a3513963d3727aa, type: 3}
+    volume: 0.7
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 13
+    audioClips:
+    - {fileID: 8300000, guid: 73a0cf1f11df0644f9a8d3b6e2b9dea5, type: 3}
+    volume: 0.7
+    pitchMin: 0.9
+    pitchMax: 1.1
+    is3D: 0
+    maxDistance: 20
+  - sfxType: 14
+    audioClips:
+    - {fileID: 8300000, guid: 7b30cd5541d93854daa233a316ae837c, type: 3}
     volume: 1
     pitchMin: 0.9
     pitchMax: 1.1
     is3D: 0
     maxDistance: 20
-  - sfxType: 0
-    audioClips: []
+  - sfxType: 15
+    audioClips:
+    - {fileID: 8300000, guid: 4371b3a69f3a6e94784c59499c6b4dc8, type: 3}
     volume: 1
     pitchMin: 0.9
     pitchMax: 1.1
     is3D: 0
     maxDistance: 20
-  - sfxType: 0
-    audioClips: []
-    volume: 1
-    pitchMin: 0.9
-    pitchMax: 1.1
-    is3D: 0
-    maxDistance: 20
-  - sfxType: 0
-    audioClips: []
-    volume: 1
-    pitchMin: 0.9
-    pitchMax: 1.1
-    is3D: 0
-    maxDistance: 20
-  - sfxType: 0
+  - sfxType: 16
     audioClips: []
     volume: 1
     pitchMin: 0.9

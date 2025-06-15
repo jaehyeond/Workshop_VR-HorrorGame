@@ -255,6 +255,12 @@ public class CultistStateMachine : MonoBehaviour
             animator.SetBool("LostPlayer", false);
             animator.SetFloat("IdleTimer", idleObservationTime);
             
+            // 플레이어 발견 괴성 사운드 재생 (VolumeManager 사용)
+            if (VolumeManager.Instance != null)
+            {
+                VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.EnemySpotPlayer, transform.position, transform);
+            }
+            
             // 목적지 설정은 EnterState에서 처리됨
         }
     }

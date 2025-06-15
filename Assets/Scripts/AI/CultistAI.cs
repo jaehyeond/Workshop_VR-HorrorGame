@@ -241,6 +241,13 @@ public class CultistAI : MonoBehaviour
                     // 공격 범위 밖이라면 추격 재개
                     animator.SetBool("PlayerDetected", true);
                     animator.SetBool("StartChase", true);
+                    
+                    // 플레이어 발견 괴성 사운드 재생 (VolumeManager 사용)
+                    if (VolumeManager.Instance != null)
+                    {
+                        VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.EnemySpotPlayer, transform.position, transform);
+                    }
+                    
                     stateMachine.SetState(CultistStateMachine.AIState.Chasing);
                 }
             }
