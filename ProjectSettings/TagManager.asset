@@ -12,6 +12,7 @@ TagManager:
   - CinematicTrigger
   - Daughter
   - Axe
+  - Boss
   layers:
   - Default
   - TransparentFX

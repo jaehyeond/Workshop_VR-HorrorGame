@@ -880,5 +880,108 @@ public class CinematicSystemSetup : EditorWindow
     }
 
     #endregion
+
+    [MenuItem("VR Horror Game/Fix Video Scenes VR Camera")]
+    static void FixVideoScenesVRCamera()
+    {
+        string[] videoScenes = { "IntroVideo", "BossIntroVideo", "EndingVideo" };
+        
+        foreach (string sceneName in videoScenes)
+        {
+            string scenePath = $"Assets/Scenes/VideoScenes/{sceneName}.unity";
+            
+            if (!File.Exists(scenePath))
+            {
+                Debug.LogWarning($"Scene not found: {scenePath}");
+                continue;
+            }
+
+            // Scene 열기
+            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            
+            Debug.Log($"Setting up OVRCameraRig in {sceneName}...");
+            
+            // 기존 OVRCameraRig 확인
+            GameObject existingOVRRig = GameObject.Find("OVRCameraRig");
+            if (existingOVRRig != null)
+            {
+                Debug.Log($"OVRCameraRig already exists in {sceneName}");
+                continue;
+            }
+
+            // 기존 VRCameraRig 삭제
+            GameObject existingVRRig = GameObject.Find("VRCameraRig");
+            if (existingVRRig != null)
+            {
+                DestroyImmediate(existingVRRig);
+            }
+
+            // OVRCameraRig 생성 (메인 게임과 동일한 구조)
+            CreateOVRCameraRigForVideoScene();
+
+            // Scene 저장
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"OVRCameraRig setup completed for {sceneName}");
+        }
+        
+        Debug.Log("All Video Scenes OVRCameraRig setup completed!");
+        AssetDatabase.Refresh();
+    }
+
+    static void CreateOVRCameraRigForVideoScene()
+    {
+        // 1. OVRCameraRig 생성
+        GameObject ovrCameraRig = new GameObject("OVRCameraRig");
+        
+        // OVRCameraRig 컴포넌트 추가 (스크립트로 설정)
+        var cameraRigScript = ovrCameraRig.AddComponent<MonoBehaviour>();
+        
+        // 2. TrackingSpace 생성
+        GameObject trackingSpace = new GameObject("TrackingSpace");
+        trackingSpace.transform.SetParent(ovrCameraRig.transform);
+        trackingSpace.transform.localPosition = Vector3.zero;
+        
+        // 3. CenterEyeAnchor 생성 (메인 카메라)
+        GameObject centerEyeAnchor = new GameObject("CenterEyeAnchor");
+        centerEyeAnchor.transform.SetParent(trackingSpace.transform);
+        centerEyeAnchor.transform.localPosition = Vector3.zero;
+        centerEyeAnchor.tag = "MainCamera";
+        
+        // Camera 컴포넌트 추가
+        Camera camera = centerEyeAnchor.AddComponent<Camera>();
+        camera.stereoTargetEye = StereoTargetEyeMask.Both;
+        camera.nearClipPlane = 0.01f;
+        camera.farClipPlane = 1000f;
+        
+        // AudioListener 추가
+        AudioListener audioListener = centerEyeAnchor.AddComponent<AudioListener>();
+        
+        // 4. LeftEyeAnchor 생성
+        GameObject leftEyeAnchor = new GameObject("LeftEyeAnchor");
+        leftEyeAnchor.transform.SetParent(trackingSpace.transform);
+        leftEyeAnchor.transform.localPosition = new Vector3(-0.032f, 0, 0);
+        
+        // 5. RightEyeAnchor 생성
+        GameObject rightEyeAnchor = new GameObject("RightEyeAnchor");
+        rightEyeAnchor.transform.SetParent(trackingSpace.transform);
+        rightEyeAnchor.transform.localPosition = new Vector3(0.032f, 0, 0);
+        
+        // 6. TrackerAnchor 생성
+        GameObject trackerAnchor = new GameObject("TrackerAnchor");
+        trackerAnchor.transform.SetParent(trackingSpace.transform);
+        trackerAnchor.transform.localPosition = Vector3.zero;
+        
+        // 7. LeftHandAnchor 생성
+        GameObject leftHandAnchor = new GameObject("LeftHandAnchor");
+        leftHandAnchor.transform.SetParent(trackingSpace.transform);
+        leftHandAnchor.transform.localPosition = Vector3.zero;
+        
+        // 8. RightHandAnchor 생성
+        GameObject rightHandAnchor = new GameObject("RightHandAnchor");
+        rightHandAnchor.transform.SetParent(trackingSpace.transform);
+        rightHandAnchor.transform.localPosition = Vector3.zero;
+        
+        Debug.Log("OVRCameraRig structure created for Video Scene");
+    }
 }
 #endif 

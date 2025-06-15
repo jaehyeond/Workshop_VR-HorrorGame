@@ -20,8 +20,13 @@ public class VideoSceneManager : MonoBehaviour
     
     [Header("=== VR Settings ===")]
     [SerializeField] private bool forceVRSetup = true;
-    [SerializeField] private float videoDistance = 5f;
-    [SerializeField] private Vector2 videoSize = new Vector2(16f, 9f);
+    [SerializeField] private float videoDistance = 12f;
+    [SerializeField] private Vector2 videoSize = new Vector2(20f, 11.25f);
+    
+    [Header("=== VR FOV Settings ===")]
+    [SerializeField] private bool useCalculatedSize = true;
+    [SerializeField] [Range(30f, 90f)] private float horizontalFOV = 65f;
+    [SerializeField] [Range(20f, 60f)] private float verticalFOV = 36.5f;
     
     private bool isTransitioning = false;
     private Canvas videoCanvas;
@@ -134,26 +139,33 @@ public class VideoSceneManager : MonoBehaviour
             {
                 videoCanvas.renderMode = RenderMode.WorldSpace;
                 
-                // Canvas 위치 설정 (플레이어 앞)
-                Transform cameraTransform = Camera.main?.transform;
+                // VR 카메라 찾기 (OVRCameraRig 또는 MainCamera)
+                Transform cameraTransform = FindVRCamera();
+                
                 if (cameraTransform != null)
                 {
                     Vector3 canvasPosition = cameraTransform.position + cameraTransform.forward * videoDistance;
+                    canvasPosition.y += 2f; // 높이 조정
                     videoCanvas.transform.position = canvasPosition;
                     videoCanvas.transform.LookAt(cameraTransform);
                     videoCanvas.transform.Rotate(0, 180, 0); // 뒤집기
+                    
+                    Debug.Log($"[VideoSceneManager] VR 카메라 발견: {cameraTransform.name}");
                 }
                 else
                 {
                     videoCanvas.transform.position = new Vector3(0, 2f, videoDistance);
                     videoCanvas.transform.rotation = Quaternion.identity;
+                    Debug.LogWarning("[VideoSceneManager] VR 카메라를 찾을 수 없음 - 기본 위치 사용");
                 }
 
                 // Canvas 크기 설정
-                RectTransform canvasRect = videoCanvas.GetComponent<RectTransform>();
-                canvasRect.sizeDelta = videoSize;
+                Vector2 finalSize = useCalculatedSize ? CalculateOptimalVRSize(videoDistance) : videoSize;
                 
-                Debug.Log($"[VideoSceneManager] VR Canvas 설정 완료: 위치={videoCanvas.transform.position}, 크기={videoSize}");
+                RectTransform canvasRect = videoCanvas.GetComponent<RectTransform>();
+                canvasRect.sizeDelta = finalSize;
+                
+                Debug.Log($"[VideoSceneManager] VR Canvas 설정 완료: 위치={videoCanvas.transform.position}, 거리={videoDistance}m, 크기={finalSize}, 계산모드={useCalculatedSize}");
             }
         }
 
@@ -163,6 +175,82 @@ public class VideoSceneManager : MonoBehaviour
         {
             Debug.Log("[VideoSceneManager] VideoScreen 발견");
         }
+    }
+
+    Transform FindVRCamera()
+    {
+        // OVRCameraRig의 CenterEyeAnchor 찾기 (우선순위 1)
+        GameObject ovrCameraRig = GameObject.Find("OVRCameraRig");
+        if (ovrCameraRig != null)
+        {
+            Transform centerEye = ovrCameraRig.transform.Find("TrackingSpace/CenterEyeAnchor");
+            if (centerEye != null)
+            {
+                Debug.Log("[VideoSceneManager] OVRCameraRig CenterEyeAnchor 발견");
+                return centerEye;
+            }
+            
+            // TrackingSpace가 없는 경우 직접 찾기
+            Transform[] children = ovrCameraRig.GetComponentsInChildren<Transform>();
+            foreach (Transform child in children)
+            {
+                if (child.name == "CenterEyeAnchor")
+                {
+                    Debug.Log("[VideoSceneManager] OVRCameraRig CenterEyeAnchor 직접 발견");
+                    return child;
+                }
+            }
+        }
+
+        // VRCameraRig 찾기 (우선순위 2)
+        GameObject vrCameraRig = GameObject.Find("VRCameraRig");
+        if (vrCameraRig != null)
+        {
+            Transform mainCamera = vrCameraRig.transform.Find("MainCamera");
+            if (mainCamera != null)
+            {
+                Debug.Log("[VideoSceneManager] VRCameraRig MainCamera 발견");
+                return mainCamera;
+            }
+        }
+
+        // 일반 MainCamera 찾기 (우선순위 3)
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            Debug.Log("[VideoSceneManager] 일반 MainCamera 발견");
+            return mainCam.transform;
+        }
+
+        // 태그로 MainCamera 찾기 (우선순위 4)
+        GameObject mainCameraObj = GameObject.FindGameObjectWithTag("MainCamera");
+        if (mainCameraObj != null)
+        {
+            Debug.Log("[VideoSceneManager] 태그로 MainCamera 발견");
+            return mainCameraObj.transform;
+        }
+
+        Debug.LogWarning("[VideoSceneManager] 어떤 카메라도 찾을 수 없음");
+        return null;
+    }
+
+    Vector2 CalculateOptimalVRSize(float distance)
+    {
+        // VR에서 편안한 시청을 위한 시야각 계산
+        // 인간의 수평 시야각: 약 110도, 수직 시야각: 약 70도
+        // 편안한 영상 시청: 수평 60-70도, 수직 35-40도 권장
+        
+        // 각도를 라디안으로 변환
+        float horizontalRadians = horizontalFOV * Mathf.Deg2Rad;
+        float verticalRadians = verticalFOV * Mathf.Deg2Rad;
+        
+        // 거리에 따른 실제 크기 계산
+        float width = 2f * distance * Mathf.Tan(horizontalRadians / 2f);
+        float height = 2f * distance * Mathf.Tan(verticalRadians / 2f);
+        
+        Debug.Log($"[VideoSceneManager] VR 크기 계산: 거리={distance}m, FOV=({horizontalFOV}°, {verticalFOV}°), 크기=({width:F1}, {height:F1})");
+        
+        return new Vector2(width, height);
     }
 
     void OptimizeVideoPlayerForVR()

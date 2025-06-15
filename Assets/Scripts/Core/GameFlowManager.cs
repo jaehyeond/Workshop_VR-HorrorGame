@@ -86,11 +86,13 @@ public class GameFlowManager : MonoBehaviour
         }
         else if (!isBossDefeated)
         {
+            // BossIntroVideo를 봤지만 Boss를 아직 처치하지 않음
             currentState = GameState.BossBattle;
         }
         else if (!hasSeenEnding)
         {
-            currentState = GameState.EndingVideo;
+            // Boss를 처치했지만 엔딩을 보지 않음
+            currentState = GameState.BossBattle; // 딸 구출 가능 상태
         }
         else
         {
@@ -98,6 +100,7 @@ public class GameFlowManager : MonoBehaviour
         }
 
         DebugLog($"[GameFlowManager] 게임 진행 상황 로드 완료 - 현재 상태: {currentState}");
+        DebugLog($"[GameFlowManager] 진행 상황: Intro({hasSeenIntro}), BossIntro({hasSeenBossIntro}), BossDefeated({isBossDefeated}), Ending({hasSeenEnding})");
     }
 
     void HandleCurrentScene()
@@ -150,6 +153,15 @@ public class GameFlowManager : MonoBehaviour
         
         // AI 활성화 및 BGM 설정
         StartCoroutine(SetupMainGameScene());
+        
+        // 플레이어 위치 복원
+        RestorePlayerPosition();
+        
+        // Boss문 상태 설정
+        SetupBossDoorState();
+        
+        // SceneTransitionTrigger 상태 설정
+        SetupSceneTransitionTriggers();
     }
 
     IEnumerator SetupMainGameScene()
@@ -206,10 +218,20 @@ public class GameFlowManager : MonoBehaviour
             case GameState.MainExploration:
                 PlayerPrefs.SetInt("HasSeenIntro", 1);
                 break;
-            case GameState.BossBattle:
+            case GameState.BossIntroVideo:
+                PlayerPrefs.SetInt("HasSeenIntro", 1);
                 PlayerPrefs.SetInt("HasSeenBossIntro", 1);
                 break;
+            case GameState.BossBattle:
+                PlayerPrefs.SetInt("HasSeenIntro", 1);
+                PlayerPrefs.SetInt("HasSeenBossIntro", 1);
+                break;
+            case GameState.EndingVideo:
+                PlayerPrefs.SetInt("HasSeenEnding", 1);
+                break;
             case GameState.GameComplete:
+                PlayerPrefs.SetInt("HasSeenIntro", 1);
+                PlayerPrefs.SetInt("HasSeenBossIntro", 1);
                 PlayerPrefs.SetInt("HasSeenEnding", 1);
                 break;
         }
@@ -246,6 +268,13 @@ public class GameFlowManager : MonoBehaviour
     public void TriggerBossIntroVideo()
     {
         DebugLog("[GameFlowManager] 보스 인트로 영상 트리거");
+        
+        // 플레이어 위치 저장 (Boss문 앞)
+        SavePlayerPosition();
+        
+        // BossIntroVideo 상태로 변경
+        SetGameState(GameState.BossIntroVideo);
+        
         SceneManager.LoadScene(bossIntroVideoScene);
     }
 
@@ -297,6 +326,160 @@ public class GameFlowManager : MonoBehaviour
         }
 
         VolumeManager.Instance.SetBGMVolume(0.7f);
+    }
+
+    void SavePlayerPosition()
+    {
+        // VR 플레이어 위치 찾기
+        GameObject player = FindVRPlayer();
+        if (player != null)
+        {
+            Vector3 position = player.transform.position;
+            Vector3 rotation = player.transform.eulerAngles;
+            
+            PlayerPrefs.SetFloat("PlayerPosX", position.x);
+            PlayerPrefs.SetFloat("PlayerPosY", position.y);
+            PlayerPrefs.SetFloat("PlayerPosZ", position.z);
+            PlayerPrefs.SetFloat("PlayerRotY", rotation.y);
+            PlayerPrefs.Save();
+            
+            DebugLog($"[GameFlowManager] 플레이어 위치 저장: {position}");
+        }
+    }
+
+    void RestorePlayerPosition()
+    {
+        // BossIntroVideo를 본 후에만 위치 복원
+        if (!HasSeenBossIntro) return;
+        
+        if (PlayerPrefs.HasKey("PlayerPosX"))
+        {
+            Vector3 savedPosition = new Vector3(
+                PlayerPrefs.GetFloat("PlayerPosX"),
+                PlayerPrefs.GetFloat("PlayerPosY"),
+                PlayerPrefs.GetFloat("PlayerPosZ")
+            );
+            
+            float savedRotationY = PlayerPrefs.GetFloat("PlayerRotY");
+            
+            StartCoroutine(RestorePlayerPositionCoroutine(savedPosition, savedRotationY));
+        }
+    }
+
+    IEnumerator RestorePlayerPositionCoroutine(Vector3 position, float rotationY)
+    {
+        yield return new WaitForSeconds(0.1f);
+        
+        GameObject player = FindVRPlayer();
+        if (player != null)
+        {
+            player.transform.position = position;
+            player.transform.rotation = Quaternion.Euler(0, rotationY, 0);
+            
+            DebugLog($"[GameFlowManager] 플레이어 위치 복원: {position}");
+            
+            // 저장된 위치 정보 삭제
+            PlayerPrefs.DeleteKey("PlayerPosX");
+            PlayerPrefs.DeleteKey("PlayerPosY");
+            PlayerPrefs.DeleteKey("PlayerPosZ");
+            PlayerPrefs.DeleteKey("PlayerRotY");
+            PlayerPrefs.Save();
+        }
+    }
+
+    GameObject FindVRPlayer()
+    {
+        // OVRCameraRig 찾기
+        GameObject ovrCameraRig = GameObject.Find("OVRCameraRig");
+        if (ovrCameraRig != null) return ovrCameraRig;
+        
+        // Player 태그로 찾기
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null) return player;
+        
+        // VRPlayer 태그로 찾기
+        GameObject vrPlayer = GameObject.FindGameObjectWithTag("VRPlayer");
+        if (vrPlayer != null) return vrPlayer;
+        
+        return null;
+    }
+
+    void SetupBossDoorState()
+    {
+        // BossIntroVideo를 본 후에는 Boss문 열기
+        if (HasSeenBossIntro)
+        {
+            StartCoroutine(OpenBossDoor());
+        }
+    }
+
+    IEnumerator OpenBossDoor()
+    {
+        yield return new WaitForSeconds(0.5f);
+        
+        // Boss문 찾기 및 열기
+        GameObject bossDoor = GameObject.Find("BossRoomDoor");
+        if (bossDoor == null)
+        {
+            // 다른 이름으로 찾기
+            bossDoor = GameObject.Find("Door");
+        }
+        
+        if (bossDoor != null)
+        {
+            // 문 열기 (Animator가 있는 경우)
+            Animator doorAnimator = bossDoor.GetComponent<Animator>();
+            if (doorAnimator != null)
+            {
+                doorAnimator.SetBool("IsOpen", true);
+                doorAnimator.SetTrigger("Open");
+            }
+            
+            // 문 비활성화 (Collider가 있는 경우)
+            Collider doorCollider = bossDoor.GetComponent<Collider>();
+            if (doorCollider != null)
+            {
+                doorCollider.enabled = false;
+            }
+            
+            DebugLog("[GameFlowManager] Boss문 열림");
+        }
+        else
+        {
+            DebugLog("[GameFlowManager] Boss문을 찾을 수 없음");
+        }
+    }
+
+    void SetupSceneTransitionTriggers()
+    {
+        // BossIntroVideo 트리거 비활성화
+        if (HasSeenBossIntro)
+        {
+            GameObject bossRoomTrigger = GameObject.Find("BossRoomTransition");
+            if (bossRoomTrigger == null)
+            {
+                bossRoomTrigger = GameObject.Find("BossRoom_SceneTransitionTrigger");
+            }
+            
+            if (bossRoomTrigger != null)
+            {
+                bossRoomTrigger.SetActive(false);
+                DebugLog("[GameFlowManager] BossRoom 트리거 비활성화");
+            }
+        }
+        
+        // EndingVideo 트리거는 Boss가 처치된 후에만 활성화
+        GameObject daughterRescueTrigger = GameObject.Find("DaughterRescueTransition");
+        if (daughterRescueTrigger == null)
+        {
+            daughterRescueTrigger = GameObject.Find("DaughterRescue_SceneTransitionTrigger");
+        }
+        
+        if (daughterRescueTrigger != null)
+        {
+            daughterRescueTrigger.SetActive(IsBossDefeated);
+            DebugLog($"[GameFlowManager] DaughterRescue 트리거 상태: {IsBossDefeated}");
+        }
     }
 
     void DebugLog(string message)
