@@ -13,11 +13,17 @@ public class CultistSpawner : MonoBehaviour
     public Transform[] bossPrayingSpots;
     public bool spawnBossOnStart = true;
     
+    [Header("Daughter 스폰 설정")]
+    public GameObject daughterPrefab;
+    public Transform[] daughterSpots;
+    public bool spawnDaughterOnStart = true;
+    
     [Header("디버그")]
     public bool enableDebugLogs = true;
     
     private List<GameObject> spawnedEnemies = new List<GameObject>();
     private List<GameObject> spawnedBosses = new List<GameObject>();
+    private List<GameObject> spawnedDaughters = new List<GameObject>();
     
     void Start()
     {
@@ -29,6 +35,11 @@ public class CultistSpawner : MonoBehaviour
         if (spawnBossOnStart)
         {
             SpawnAllBosses();
+        }
+        
+        if (spawnDaughterOnStart)
+        {
+            SpawnAllDaughters();
         }
     }
     
@@ -92,11 +103,42 @@ public class CultistSpawner : MonoBehaviour
         DebugLog($"총 {spawnedBosses.Count}명의 Boss를 스폰했습니다.");
     }
     
+    [ContextMenu("Spawn All Daughters")]
+    public void SpawnAllDaughters()
+    {
+        // 기존 스폰된 Daughter들 제거
+        ClearAllDaughters();
+        
+        if (daughterPrefab == null)
+        {
+            Debug.LogError("[CultistSpawner] Daughter Prefab이 설정되지 않았습니다!");
+            return;
+        }
+        
+        if (daughterSpots == null || daughterSpots.Length == 0)
+        {
+            Debug.LogError("[CultistSpawner] Daughter Spots이 설정되지 않았습니다!");
+            return;
+        }
+        
+        // 각 Daughter 위치에 Daughter 스폰
+        for (int i = 0; i < daughterSpots.Length; i++)
+        {
+            if (daughterSpots[i] != null)
+            {
+                SpawnDaughterAt(daughterSpots[i], i);
+            }
+        }
+        
+        DebugLog($"총 {spawnedDaughters.Count}명의 Daughter를 스폰했습니다.");
+    }
+    
     [ContextMenu("Spawn All Characters")]
     public void SpawnAllCharacters()
     {
         SpawnAllEnemies();
         SpawnAllBosses();
+        SpawnAllDaughters();
     }
     
     void SpawnEnemyAt(Transform prayingSpot, int index)
@@ -149,6 +191,24 @@ public class CultistSpawner : MonoBehaviour
         spawnedBosses.Add(newBoss);
     }
     
+    void SpawnDaughterAt(Transform daughterSpot, int index)
+    {
+        // Daughter 위치에 정확히 스폰
+        Vector3 spawnPosition = daughterSpot.position;
+        
+        // Daughter 생성
+        GameObject newDaughter = Instantiate(daughterPrefab, spawnPosition, daughterSpot.rotation);
+        newDaughter.name = $"Daughter {index + 1}";
+        
+        // Daughter 컴포넌트 확인 (필요시 추가 설정)
+        // 예: DaughterController, InteractableObject 등
+        
+        DebugLog($"Daughter {newDaughter.name}을 {daughterSpot.name}에 배치했습니다.");
+        
+        // 스폰된 리스트에 추가
+        spawnedDaughters.Add(newDaughter);
+    }
+    
     [ContextMenu("Clear All Enemies")]
     public void ClearAllEnemies()
     {
@@ -193,11 +253,34 @@ public class CultistSpawner : MonoBehaviour
         DebugLog("모든 Boss를 제거했습니다.");
     }
     
+    [ContextMenu("Clear All Daughters")]
+    public void ClearAllDaughters()
+    {
+        foreach (GameObject daughter in spawnedDaughters)
+        {
+            if (daughter != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(daughter);
+                }
+                else
+                {
+                    DestroyImmediate(daughter);
+                }
+            }
+        }
+        
+        spawnedDaughters.Clear();
+        DebugLog("모든 Daughter를 제거했습니다.");
+    }
+    
     [ContextMenu("Clear All Characters")]
     public void ClearAllCharacters()
     {
         ClearAllEnemies();
         ClearAllBosses();
+        ClearAllDaughters();
     }
     
     void DebugLog(string message)
@@ -253,6 +336,30 @@ public class CultistSpawner : MonoBehaviour
                     // 연결선 (주황색)
                     Gizmos.color = new Color(1f, 0.5f, 0f); // 주황색
                     Gizmos.DrawLine(bossPrayingSpots[i].position, bossSpawnPos);
+                }
+            }
+        }
+        
+        // Daughter Spots 시각화
+        if (daughterSpots != null)
+        {
+            for (int i = 0; i < daughterSpots.Length; i++)
+            {
+                if (daughterSpots[i] != null)
+                {
+                    // Daughter 위치 표시 (보라색)
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawWireSphere(daughterSpots[i].position, 0.6f);
+                    
+                    // Daughter 스폰 위치 표시 (흰색)
+                    Vector3 daughterSpawnPos = daughterSpots[i].position;
+                    Gizmos.color = Color.white;
+                    Gizmos.DrawWireCube(daughterSpawnPos, Vector3.one * 0.4f);
+                    
+                    // 텍스트 표시 (에디터에서만)
+                    #if UNITY_EDITOR
+                    UnityEditor.Handles.Label(daughterSpots[i].position + Vector3.up * 1f, $"Daughter {i + 1}");
+                    #endif
                 }
             }
         }
