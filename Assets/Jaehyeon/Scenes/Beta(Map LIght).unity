@@ -151,10 +151,10 @@ MonoBehaviour:
   introVideo: {fileID: 32900000, guid: 3cad714ac196b304f952fa6d6c357033, type: 3}
   bossIntroVideo: {fileID: 32900000, guid: 039af14b68cec3e44911c80c9a4d92c0, type: 3}
   endingVideo: {fileID: 32900000, guid: 77a2856a0009e994cbe4af097cb6fe18, type: 3}
-  videoPlayer: {fileID: 298127388}
+  videoPlayer: {fileID: 0}
   videoCanvas: {fileID: 2031015423}
-  videoScreen: {fileID: 1816741496}
-  videoAudioSource: {fileID: 298127387}
+  videoScreen: {fileID: 0}
+  videoAudioSource: {fileID: 0}
   mainSceneName: Beta(Map Light)
   allowSkip: 1
   skipKey: 32

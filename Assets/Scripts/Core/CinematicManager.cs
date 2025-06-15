@@ -125,32 +125,21 @@ public class CinematicManager : MonoBehaviour
     {
         if (videoPlayer == null) return;
 
+        // VideoPlayer 기본 설정
         videoPlayer.playOnAwake = false;
         videoPlayer.isLooping = false;
+        videoPlayer.skipOnDrop = true;
+        videoPlayer.waitForFirstFrame = true;
+        
+        // VR 최적화 설정
         videoPlayer.renderMode = VideoRenderMode.RenderTexture;
         
-        // RenderTexture 생성
-        RenderTexture renderTexture = new RenderTexture(1920, 1080, 16);
+        // RenderTexture 생성 (VR 최적화)
+        RenderTexture renderTexture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32);
+        renderTexture.Create();
         videoPlayer.targetTexture = renderTexture;
-
-        // VideoScreen의 RawImage에 RenderTexture 연결
-        if (videoScreen != null)
-        {
-            UnityEngine.UI.RawImage rawImage = videoScreen.GetComponent<UnityEngine.UI.RawImage>();
-            if (rawImage != null)
-            {
-                rawImage.texture = renderTexture;
-                Debug.Log("[CinematicManager] VideoScreen에 RenderTexture 연결 완료");
-            }
-            else
-            {
-                Debug.LogWarning("[CinematicManager] VideoScreen에 RawImage 컴포넌트가 없습니다!");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[CinematicManager] VideoScreen이 설정되지 않았습니다!");
-        }
+        
+        Debug.Log("[CinematicManager] VideoPlayer RenderTexture 생성: " + renderTexture.width + "x" + renderTexture.height);
 
         // 오디오 설정
         if (videoAudioSource == null)
@@ -160,55 +149,34 @@ public class CinematicManager : MonoBehaviour
         
         videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
         videoPlayer.SetTargetAudioSource(0, videoAudioSource);
+        
+        // AudioSource VR 최적화
+        videoAudioSource.spatialBlend = 0f; // 2D 사운드
+        videoAudioSource.volume = 1f;
 
         // 이벤트 연결
         videoPlayer.loopPointReached += OnVideoFinished;
+        videoPlayer.prepareCompleted += OnVideoPrepared;
+        
+        Debug.Log("[CinematicManager] VideoPlayer 설정 완료");
     }
 
     void SetupVideoCanvas()
     {
         if (videoCanvas == null)
         {
-            // VR용 World Space Canvas 생성
-            GameObject canvasObj = new GameObject("VideoCanvas");
-            canvasObj.transform.SetParent(transform);
-            
-            videoCanvas = canvasObj.AddComponent<Canvas>();
-            videoCanvas.renderMode = RenderMode.WorldSpace;
-            
-            // Canvas 크기 및 위치 설정 (VR 최적화)
-            RectTransform canvasRect = videoCanvas.GetComponent<RectTransform>();
-            canvasRect.sizeDelta = new Vector2(6f, 3.375f); // 16:9 비율
-            
-            // VR 카메라 앞 4미터에 배치
-            Transform vrCamera = FindVRCamera();
-            if (vrCamera != null)
-            {
-                canvasObj.transform.position = vrCamera.position + vrCamera.forward * 4f;
-                canvasObj.transform.LookAt(vrCamera.position);
-                canvasObj.transform.rotation *= Quaternion.Euler(0, 180, 0);
-                Debug.Log("[CinematicManager] VideoCanvas VR 위치 설정 완료: " + canvasObj.transform.position);
-            }
-            else
-            {
-                // VR 카메라를 찾지 못한 경우 기본 위치
-                canvasObj.transform.position = new Vector3(0, 2, 4);
-                canvasObj.transform.rotation = Quaternion.identity;
-                Debug.LogWarning("[CinematicManager] VR 카메라를 찾지 못해 기본 위치로 설정");
-            }
+            Debug.LogError("[CinematicManager] VideoCanvas가 Inspector에서 할당되지 않았습니다!");
+            return;
         }
-        else
-        {
-            // 기존 Canvas가 있는 경우 VR 위치 재조정
-            Transform vrCamera = FindVRCamera();
-            if (vrCamera != null)
-            {
-                videoCanvas.transform.position = vrCamera.position + vrCamera.forward * 4f;
-                videoCanvas.transform.LookAt(vrCamera.position);
-                videoCanvas.transform.rotation *= Quaternion.Euler(0, 180, 0);
-                Debug.Log("[CinematicManager] 기존 VideoCanvas VR 위치 재조정 완료");
-            }
-        }
+
+        // Canvas 기본 설정 - VR WorldSpace 모드
+        videoCanvas.renderMode = RenderMode.WorldSpace;
+        
+        // Canvas 크기 설정 (VR 시야 가득 채우기 - 매우 큰 크기)
+        RectTransform canvasRect = videoCanvas.GetComponent<RectTransform>();
+        canvasRect.sizeDelta = new Vector2(50f, 28.125f); // 16:9 비율, 시야 완전히 덮는 크기
+        
+        Debug.Log("[CinematicManager] VideoCanvas 설정 완료 - VR WorldSpace 모드");
 
         // VideoScreen (RawImage) 생성
         if (videoScreen == null)
@@ -226,11 +194,22 @@ public class CinematicManager : MonoBehaviour
             rectTransform.offsetMax = Vector2.zero;
             rectTransform.localScale = Vector3.one;
             
-            // 검은색 배경
-            rawImage.color = Color.black;
+            // 흰색 배경 (영상이 보이도록)
+            rawImage.color = Color.white;
             
             videoScreen = screenObj;
             Debug.Log("[CinematicManager] VideoScreen 생성 완료");
+        }
+        
+        // VideoPlayer의 RenderTexture를 즉시 연결 (초기화 시)
+        if (videoPlayer != null && videoPlayer.targetTexture != null)
+        {
+            UnityEngine.UI.RawImage rawImage = videoScreen.GetComponent<UnityEngine.UI.RawImage>();
+            if (rawImage != null)
+            {
+                rawImage.texture = videoPlayer.targetTexture;
+                Debug.Log("[CinematicManager] 초기화 시 RenderTexture 연결: " + videoPlayer.targetTexture.name);
+            }
         }
 
         // 초기에는 비활성화
@@ -254,6 +233,55 @@ public class CinematicManager : MonoBehaviour
         }
 
         return null;
+    }
+    
+    void PositionCanvasForVR()
+    {
+        if (videoCanvas == null) return;
+        
+        Transform vrCamera = FindVRCamera();
+        if (vrCamera != null)
+        {
+            // VR 카메라 앞 10미터에 배치 (매우 큰 Canvas에 맞춰 거리 조정)
+            Vector3 targetPosition = vrCamera.position + vrCamera.forward * 10f;
+            videoCanvas.transform.position = targetPosition;
+            
+            // 카메라를 향하도록 회전
+            videoCanvas.transform.LookAt(vrCamera.position);
+            
+            Debug.Log("[CinematicManager] VR Canvas 위치 조정: " + targetPosition + ", VR Camera: " + vrCamera.position);
+        }
+        else
+        {
+            // VR 카메라를 찾지 못한 경우 기본 위치
+            videoCanvas.transform.position = new Vector3(0, 1.6f, 10f); // 눈높이, 멀리
+            videoCanvas.transform.rotation = Quaternion.identity;
+            Debug.LogWarning("[CinematicManager] VR 카메라를 찾지 못해 기본 위치로 설정");
+        }
+    }
+    
+    void RefreshVideoTexture()
+    {
+        if (videoScreen != null && videoPlayer != null)
+        {
+            UnityEngine.UI.RawImage rawImage = videoScreen.GetComponent<UnityEngine.UI.RawImage>();
+            if (rawImage != null && videoPlayer.targetTexture != null)
+            {
+                rawImage.texture = videoPlayer.targetTexture;
+                rawImage.material = null; // 기본 UI 머티리얼 사용
+                Debug.Log("[CinematicManager] RenderTexture 재연결 완료: " + videoPlayer.targetTexture.name);
+            }
+            else
+            {
+                Debug.LogError("[CinematicManager] RenderTexture 연결 실패 - RawImage: " + (rawImage != null) + ", TargetTexture: " + (videoPlayer.targetTexture != null));
+            }
+        }
+    }
+    
+    void OnVideoPrepared(VideoPlayer vp)
+    {
+        Debug.Log("[CinematicManager] 영상 준비 완료 - 텍스처 연결 시작");
+        RefreshVideoTexture();
     }
     
     void SetupDoorControl()
@@ -338,16 +366,69 @@ public class CinematicManager : MonoBehaviour
 
         // 영상 설정
         videoPlayer.clip = clip;
+        
+        // 클립 설정 후 RenderTexture 재생성 및 연결 (핵심 수정!)
+        RenderTexture renderTexture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32);
+        renderTexture.Create();
+        videoPlayer.targetTexture = renderTexture;
+        
+        Debug.Log("[CinematicManager] 새 RenderTexture 생성 및 연결: " + renderTexture.name);
+        
+        // RawImage에 즉시 연결
+        if (videoScreen != null)
+        {
+            UnityEngine.UI.RawImage rawImage = videoScreen.GetComponent<UnityEngine.UI.RawImage>();
+            if (rawImage != null)
+            {
+                rawImage.texture = renderTexture;
+                Debug.Log("[CinematicManager] RawImage에 RenderTexture 연결 완료");
+            }
+        }
+        
+        // VR Canvas 위치를 현재 카메라 위치 기준으로 동적 조정
+        PositionCanvasForVR();
+        
         videoCanvas.gameObject.SetActive(true);
 
-        // 페이드 인
-        yield return StartCoroutine(FadeVideo(0f, 1f));
-
+        // 영상 준비 및 재생
+        videoPlayer.Prepare();
+        
+        // 영상 준비 완료 대기
+        while (!videoPlayer.isPrepared)
+        {
+            yield return null;
+        }
+        
+        Debug.Log("[CinematicManager] 영상 준비 완료 - 재생 시작");
+        
+        // RenderTexture 연결
+        RefreshVideoTexture();
+        
         // 영상 재생
         videoPlayer.Play();
         
-        // VideoPlayer 준비 대기
+        // 재생 시작 대기 및 상태 확인
         yield return new WaitForSeconds(0.1f);
+        
+        // 디버깅: VideoPlayer와 RenderTexture 상태 확인
+        Debug.Log("[CinematicManager] === 영상 재생 상태 확인 ===");
+        Debug.Log("VideoPlayer.isPlaying: " + videoPlayer.isPlaying);
+        Debug.Log("VideoPlayer.isPrepared: " + videoPlayer.isPrepared);
+        Debug.Log("VideoPlayer.targetTexture: " + (videoPlayer.targetTexture != null ? videoPlayer.targetTexture.name : "null"));
+        Debug.Log("VideoPlayer.clip: " + (videoPlayer.clip != null ? videoPlayer.clip.name : "null"));
+        
+        if (videoScreen != null)
+        {
+            UnityEngine.UI.RawImage rawImage = videoScreen.GetComponent<UnityEngine.UI.RawImage>();
+            if (rawImage != null)
+            {
+                Debug.Log("RawImage.texture: " + (rawImage.texture != null ? rawImage.texture.name : "null"));
+                Debug.Log("RawImage.color: " + rawImage.color);
+            }
+        }
+
+        // 페이드 인
+        yield return StartCoroutine(FadeVideo(0f, 1f));
         
         // 영상 재생 상태 확인
         Debug.Log("[CinematicManager] VideoPlayer 상태 - isPlaying: " + videoPlayer.isPlaying + ", isPrepared: " + videoPlayer.isPrepared);
