@@ -600,5 +600,305 @@ public class CinematicSystemSetup : EditorWindow
     }
 
     #endregion
+
+    [MenuItem("VR Horror Game/Setup/Fix BossRoom Trigger Position")]
+    static void FixBossRoomTriggerPosition()
+    {
+        Debug.Log("[CinematicSystemSetup] BossRoom 트리거 위치 수정 시작...");
+        
+        // BossRoom_CinematicTrigger 찾기
+        GameObject bossRoomTrigger = GameObject.Find("BossRoom_CinematicTrigger");
+        if (bossRoomTrigger == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] BossRoom_CinematicTrigger를 찾을 수 없습니다!");
+            return;
+        }
+        
+        // 보스 스폰 위치 기준으로 입구 위치 계산
+        Vector3 bossPosition = new Vector3(-22.881f, 3.67f, -28.125f);
+        Vector3 doorPosition = new Vector3(-22.881f, 3.67f, -20f); // 보스룸 앞쪽 입구
+        
+        bossRoomTrigger.transform.position = doorPosition;
+        
+        // 트리거 크기 조정 (더 넓게)
+        BoxCollider boxCollider = bossRoomTrigger.GetComponent<BoxCollider>();
+        if (boxCollider != null)
+        {
+            boxCollider.size = new Vector3(4f, 3f, 2f); // 문 크기에 맞게 조정
+        }
+        
+        Debug.Log($"[CinematicSystemSetup] BossRoom 트리거 위치 수정 완료: {doorPosition}");
+        EditorUtility.DisplayDialog("위치 수정 완료", $"BossRoom_CinematicTrigger가 {doorPosition}로 이동되었습니다!", "확인");
+    }
+    
+    [MenuItem("VR Horror Game/Setup/Fix DaughterRescue Trigger Position")]
+    static void FixDaughterRescueTriggerPosition()
+    {
+        Debug.Log("[CinematicSystemSetup] DaughterRescue 트리거 위치 수정 시작...");
+        
+        // DaughterRescue_CinematicTrigger 찾기
+        GameObject daughterTrigger = GameObject.Find("DaughterRescue_CinematicTrigger");
+        if (daughterTrigger == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] DaughterRescue_CinematicTrigger를 찾을 수 없습니다!");
+            return;
+        }
+        
+        // Daughter Spot 위치 찾기
+        GameObject daughterSpot = GameObject.Find("Daughter Spot");
+        if (daughterSpot != null)
+        {
+            Vector3 daughterPosition = daughterSpot.transform.position;
+            daughterTrigger.transform.position = daughterPosition + Vector3.up * 0.5f; // 약간 위로
+            
+            Debug.Log("[CinematicSystemSetup] DaughterRescue 트리거 위치 수정 완료: " + daughterPosition);
+        }
+        else
+        {
+            // 기본 위치로 설정
+            Vector3 defaultPosition = new Vector3(-25f, 4f, -30f); // 보스룸 근처
+            daughterTrigger.transform.position = defaultPosition;
+            
+            Debug.Log("[CinematicSystemSetup] DaughterRescue 트리거 기본 위치 설정: " + defaultPosition);
+        }
+        
+        EditorUtility.DisplayDialog("위치 수정 완료", "DaughterRescue_CinematicTrigger 위치가 수정되었습니다!", "확인");
+    }
+    
+    [MenuItem("VR Horror Game/Setup/Setup Boss Room Door")]
+    static void SetupBossRoomDoor()
+    {
+        Debug.Log("[CinematicSystemSetup] 보스룸 문 설정 시작...");
+        
+        // CinematicManager 찾기
+        CinematicManager cinematicManager = FindFirstObjectByType<CinematicManager>();
+        if (cinematicManager == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] CinematicManager를 찾을 수 없습니다!");
+            EditorUtility.DisplayDialog("에러", "CinematicManager를 찾을 수 없습니다!", "확인");
+            return;
+        }
+        
+        // 보스 위치 근처의 DoorD_V2 찾기
+        GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+        GameObject bestDoor = null;
+        float closestDistance = float.MaxValue;
+        Vector3 bossPosition = new Vector3(-22.881f, 3.67f, -28.125f);
+        
+        foreach (GameObject obj in allObjects)
+        {
+            if (obj.name.Contains("DoorD_V2") && 
+                !obj.name.Contains("Frame") && 
+                !obj.name.Contains("Left") && 
+                !obj.name.Contains("Right") && 
+                !obj.name.Contains("Window"))
+            {
+                float distance = Vector3.Distance(obj.transform.position, bossPosition);
+                if (distance < closestDistance && distance < 20f) // 20미터 이내
+                {
+                    closestDistance = distance;
+                    bestDoor = obj;
+                }
+            }
+        }
+        
+        if (bestDoor != null)
+        {
+            // CinematicManager에 문 설정
+            cinematicManager.SetBossRoomDoor(bestDoor);
+            
+            Debug.Log("[CinematicSystemSetup] 보스룸 문 설정 완료: " + bestDoor.name + " (거리: " + closestDistance.ToString("F1") + "m)");
+            EditorUtility.DisplayDialog("설정 완료", 
+                "보스룸 문이 설정되었습니다!\n문: " + bestDoor.name + "\n보스와의 거리: " + closestDistance.ToString("F1") + "m", "확인");
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicSystemSetup] 적절한 보스룸 문을 찾을 수 없습니다!");
+            EditorUtility.DisplayDialog("경고", "보스 위치 근처에서 적절한 DoorD_V2를 찾을 수 없습니다!", "확인");
+        }
+    }
+    
+    [MenuItem("VR Horror Game/Debug/Test Door Control")]
+    static void TestDoorControl()
+    {
+        if (!Application.isPlaying)
+        {
+            EditorUtility.DisplayDialog("경고", "게임이 실행 중일 때만 테스트할 수 있습니다!", "확인");
+            return;
+        }
+        
+        CinematicManager cinematicManager = CinematicManager.Instance;
+        if (cinematicManager == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] CinematicManager 인스턴스를 찾을 수 없습니다!");
+            return;
+        }
+        
+        if (cinematicManager.BossRoomDoor != null)
+        {
+            bool isActive = cinematicManager.BossRoomDoor.activeInHierarchy;
+            if (isActive)
+            {
+                cinematicManager.BossRoomDoor.SetActive(false);
+                Debug.Log("[CinematicSystemSetup] 테스트: 보스룸 문 열림");
+            }
+            else
+            {
+                cinematicManager.BossRoomDoor.SetActive(true);
+                Debug.Log("[CinematicSystemSetup] 테스트: 보스룸 문 닫힘");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicSystemSetup] 보스룸 문이 설정되지 않았습니다!");
+        }
+    }
+
+    [MenuItem("VR Horror Game/Debug/Force Play Intro Video")]
+    static void ForcePlayIntroVideo()
+    {
+        if (!Application.isPlaying)
+        {
+            EditorUtility.DisplayDialog("경고", "게임이 실행 중일 때만 사용할 수 있습니다!", "확인");
+            return;
+        }
+        
+        Debug.Log("[CinematicSystemSetup] 강제 인트로 영상 재생 시작...");
+        
+        // GameProgressManager 상태 리셋
+        if (GameProgressManager.Instance != null)
+        {
+            GameProgressManager.Instance.ResetGameProgress();
+            Debug.Log("[CinematicSystemSetup] GameProgressManager 진행상황 리셋");
+        }
+        
+        // CinematicManager로 직접 재생
+        if (CinematicManager.Instance != null)
+        {
+            CinematicManager.Instance.PlayCinematic(CinematicManager.CinematicType.Intro);
+            Debug.Log("[CinematicSystemSetup] 인트로 영상 강제 재생");
+        }
+        else
+        {
+            Debug.LogError("[CinematicSystemSetup] CinematicManager를 찾을 수 없습니다!");
+        }
+    }
+    
+    [MenuItem("VR Horror Game/Debug/Check Intro Video Status")]
+    static void CheckIntroVideoStatus()
+    {
+        Debug.Log("=== Intro Video Status Check ===");
+        
+        // 씬 이름 확인
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        Debug.Log("현재 씬: " + sceneName);
+        
+        // CinematicManager 확인
+        CinematicManager cinematicManager = FindFirstObjectByType<CinematicManager>();
+        if (cinematicManager != null)
+        {
+            Debug.Log("CinematicManager 발견: " + cinematicManager.name);
+            Debug.Log("Intro Video 할당됨: " + (cinematicManager.GetVideoClip(CinematicManager.CinematicType.Intro) != null));
+            Debug.Log("현재 영상 재생 중: " + cinematicManager.IsPlayingVideo);
+        }
+        else
+        {
+            Debug.LogError("CinematicManager를 찾을 수 없습니다!");
+        }
+        
+        // GameProgressManager 확인
+        GameProgressManager progressManager = FindFirstObjectByType<GameProgressManager>();
+        if (progressManager != null)
+        {
+            Debug.Log("GameProgressManager 발견: " + progressManager.name);
+            Debug.Log("현재 상태: " + progressManager.CurrentState);
+            Debug.Log("hasSeenIntro: " + progressManager.HasSeenIntro);
+        }
+        else
+        {
+            Debug.LogError("GameProgressManager를 찾을 수 없습니다!");
+        }
+        
+        // PlayerPrefs 확인
+        Debug.Log("PlayerPrefs HasSeenIntro: " + PlayerPrefs.GetInt("HasSeenIntro", 0));
+        
+        Debug.Log("=== Status Check Complete ===");
+    }
+    
+    [MenuItem("VR Horror Game/Debug/Reset All Progress")]
+    static void ResetAllProgress()
+    {
+        Debug.Log("[CinematicSystemSetup] 모든 진행상황 리셋...");
+        
+        // PlayerPrefs 완전 삭제
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+        
+        // 게임 실행 중이면 GameProgressManager도 리셋
+        if (Application.isPlaying && GameProgressManager.Instance != null)
+        {
+            GameProgressManager.Instance.ResetGameProgress();
+        }
+        
+        Debug.Log("[CinematicSystemSetup] 모든 진행상황 리셋 완료!");
+        EditorUtility.DisplayDialog("리셋 완료", "모든 게임 진행상황이 리셋되었습니다!", "확인");
+    }
+
+    [MenuItem("VR Horror Game/Debug/Fix VideoScreen Connection")]
+    public static void FixVideoScreenConnection()
+    {
+        CinematicManager cinematicManager = FindFirstObjectByType<CinematicManager>();
+        if (cinematicManager == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] CinematicManager를 찾을 수 없습니다!");
+            return;
+        }
+
+        // VideoCanvas 찾기
+        Canvas videoCanvas = null;
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas.name == "VideoCanvas")
+            {
+                videoCanvas = canvas;
+                break;
+            }
+        }
+
+        if (videoCanvas == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] VideoCanvas를 찾을 수 없습니다!");
+            return;
+        }
+
+        // VideoScreen 찾기
+        Transform videoScreenTransform = videoCanvas.transform.Find("VideoScreen");
+        if (videoScreenTransform == null)
+        {
+            Debug.LogError("[CinematicSystemSetup] VideoScreen을 찾을 수 없습니다!");
+            return;
+        }
+
+        // CinematicManager에 VideoScreen 연결 (리플렉션 사용)
+        var cinematicManagerType = typeof(CinematicManager);
+        var videoScreenField = cinematicManagerType.GetField("videoScreen", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        if (videoScreenField != null)
+        {
+            videoScreenField.SetValue(cinematicManager, videoScreenTransform.gameObject);
+            Debug.Log("[CinematicSystemSetup] VideoScreen 연결 완료: " + videoScreenTransform.name);
+            
+            // 변경사항 저장
+            EditorUtility.SetDirty(cinematicManager);
+            
+            EditorUtility.DisplayDialog("VideoScreen 연결", "VideoScreen이 성공적으로 연결되었습니다!", "확인");
+        }
+        else
+        {
+            Debug.LogError("[CinematicSystemSetup] videoScreen 필드를 찾을 수 없습니다!");
+        }
+    }
 }
 #endif 

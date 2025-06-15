@@ -29,6 +29,10 @@ public class CinematicManager : MonoBehaviour
     [SerializeField] private bool allowSkip = true;
     [SerializeField] private KeyCode skipKey = KeyCode.Space;
     [SerializeField] private float fadeTime = 1f;
+    
+    [Header("=== Door Control ===")]
+    [SerializeField] private GameObject bossRoomDoor; // 보스룸 문 (DoorD_V2)
+    [SerializeField] private bool autoFindDoor = true; // 자동으로 문 찾기
 
     // 현재 상태
     private bool isPlayingVideo = false;
@@ -66,10 +70,19 @@ public class CinematicManager : MonoBehaviour
     void Start()
     {
         // 게임 시작 시 자동으로 인트로 영상 재생
-        if (SceneManager.GetActiveScene().name == "Revert" || 
-            SceneManager.GetActiveScene().name == mainSceneName)
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        Debug.Log("[CinematicManager] 현재 씬: " + currentSceneName);
+        
+        if (currentSceneName == "Revert" || 
+            currentSceneName == mainSceneName ||
+            currentSceneName == "Beta(Map LIght)" ||
+            currentSceneName.Contains("Beta"))
         {
             StartCoroutine(PlayIntroVideoOnStart());
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicManager] 인트로 영상을 재생하지 않는 씬: " + currentSceneName);
         }
     }
 
@@ -103,6 +116,7 @@ public class CinematicManager : MonoBehaviour
 
         SetupVideoPlayer();
         SetupVideoCanvas();
+        SetupDoorControl();
 
         Debug.Log("[CinematicManager] 초기화 완료");
     }
@@ -118,6 +132,25 @@ public class CinematicManager : MonoBehaviour
         // RenderTexture 생성
         RenderTexture renderTexture = new RenderTexture(1920, 1080, 16);
         videoPlayer.targetTexture = renderTexture;
+
+        // VideoScreen의 RawImage에 RenderTexture 연결
+        if (videoScreen != null)
+        {
+            UnityEngine.UI.RawImage rawImage = videoScreen.GetComponent<UnityEngine.UI.RawImage>();
+            if (rawImage != null)
+            {
+                rawImage.texture = renderTexture;
+                Debug.Log("[CinematicManager] VideoScreen에 RenderTexture 연결 완료");
+            }
+            else
+            {
+                Debug.LogWarning("[CinematicManager] VideoScreen에 RawImage 컴포넌트가 없습니다!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicManager] VideoScreen이 설정되지 않았습니다!");
+        }
 
         // 오디오 설정
         if (videoAudioSource == null)
@@ -157,6 +190,29 @@ public class CinematicManager : MonoBehaviour
             }
         }
 
+        // VideoScreen (RawImage) 생성
+        if (videoScreen == null)
+        {
+            GameObject screenObj = new GameObject("VideoScreen");
+            screenObj.transform.SetParent(videoCanvas.transform);
+            
+            UnityEngine.UI.RawImage rawImage = screenObj.AddComponent<UnityEngine.UI.RawImage>();
+            
+            // RectTransform 설정 (전체 화면)
+            RectTransform rectTransform = rawImage.rectTransform;
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+            rectTransform.localScale = Vector3.one;
+            
+            // 검은색 배경
+            rawImage.color = Color.black;
+            
+            videoScreen = screenObj;
+            Debug.Log("[CinematicManager] VideoScreen 생성 완료");
+        }
+
         // 초기에는 비활성화
         videoCanvas.gameObject.SetActive(false);
     }
@@ -179,6 +235,54 @@ public class CinematicManager : MonoBehaviour
 
         return null;
     }
+    
+    void SetupDoorControl()
+    {
+        // 자동으로 보스룸 문 찾기
+        if (autoFindDoor && bossRoomDoor == null)
+        {
+            // DoorD_V2 오브젝트 찾기 (보스 위치 근처)
+            GameObject[] doors = GameObject.FindGameObjectsWithTag("Untagged");
+            foreach (GameObject door in doors)
+            {
+                if (door.name.Contains("DoorD_V2") && !door.name.Contains("Frame") && 
+                    !door.name.Contains("Left") && !door.name.Contains("Right") && 
+                    !door.name.Contains("Window"))
+                {
+                    // 보스 위치 근처의 문인지 확인
+                    Vector3 bossPosition = new Vector3(-22.881f, 3.67f, -28.125f);
+                    float distance = Vector3.Distance(door.transform.position, bossPosition);
+                    
+                    if (distance < 15f) // 보스 위치에서 15미터 이내
+                    {
+                        bossRoomDoor = door;
+                        Debug.Log("[CinematicManager] 보스룸 문 자동 감지: " + door.name + " (거리: " + distance.ToString("F1") + "m)");
+                        break;
+                    }
+                }
+            }
+            
+            // 찾지 못했으면 이름으로 직접 찾기
+            if (bossRoomDoor == null)
+            {
+                bossRoomDoor = GameObject.Find("DoorD_V2");
+                if (bossRoomDoor != null)
+                {
+                    Debug.Log("[CinematicManager] 보스룸 문 이름으로 찾음: " + bossRoomDoor.name);
+                }
+            }
+        }
+        
+        // 문 상태 확인
+        if (bossRoomDoor != null)
+        {
+            Debug.Log("[CinematicManager] 보스룸 문 설정 완료: " + bossRoomDoor.name + " (활성화: " + bossRoomDoor.activeInHierarchy + ")");
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicManager] 보스룸 문을 찾을 수 없습니다!");
+        }
+    }
 
     #endregion
 
@@ -195,7 +299,7 @@ public class CinematicManager : MonoBehaviour
         VideoClip clipToPlay = GetVideoClip(cinematicType);
         if (clipToPlay == null)
         {
-            Debug.LogError($"[CinematicManager] {cinematicType} 영상 클립이 없습니다!");
+            Debug.LogError("[CinematicManager] " + cinematicType + " 영상 클립이 없습니다!");
             return;
         }
 
@@ -204,7 +308,7 @@ public class CinematicManager : MonoBehaviour
 
     IEnumerator PlayVideoCoroutine(CinematicType cinematicType, VideoClip clip)
     {
-        Debug.Log($"[CinematicManager] {cinematicType} 영상 재생 시작");
+        Debug.Log("[CinematicManager] " + cinematicType + " 영상 재생 시작");
         
         isPlayingVideo = true;
         currentCinematic = cinematicType;
@@ -237,7 +341,7 @@ public class CinematicManager : MonoBehaviour
 
     IEnumerator EndVideoPlayback()
     {
-        Debug.Log($"[CinematicManager] {currentCinematic} 영상 재생 완료");
+        Debug.Log("[CinematicManager] " + currentCinematic + " 영상 재생 완료");
 
         // 페이드 아웃
         yield return StartCoroutine(FadeVideo(1f, 0f));
@@ -259,6 +363,12 @@ public class CinematicManager : MonoBehaviour
         CinematicType completedCinematic = currentCinematic;
         currentCinematic = CinematicType.None;
         isPlayingVideo = false;
+
+        // 특별 처리: BossIntro 영상 종료 시 문 열기
+        if (completedCinematic == CinematicType.BossIntro)
+        {
+            OpenBossRoomDoor();
+        }
 
         // 게임 진행 상태 업데이트
         GameProgressManager.Instance?.OnCinematicCompleted(completedCinematic);
@@ -289,7 +399,7 @@ public class CinematicManager : MonoBehaviour
     {
         if (!isPlayingVideo || !allowSkip) return;
 
-        Debug.Log($"[CinematicManager] {currentCinematic} 영상 스킵됨");
+        Debug.Log("[CinematicManager] " + currentCinematic + " 영상 스킵됨");
         
         videoPlayer.Stop();
         // EndVideoPlayback은 Update의 while 루프에서 자동 호출됨
@@ -377,7 +487,7 @@ public class CinematicManager : MonoBehaviour
 
     #region Utility Methods
 
-    VideoClip GetVideoClip(CinematicType cinematicType)
+    public VideoClip GetVideoClip(CinematicType cinematicType)
     {
         switch (cinematicType)
         {
@@ -397,11 +507,26 @@ public class CinematicManager : MonoBehaviour
         // 씬 로드 완료 후 약간의 지연
         yield return new WaitForSeconds(0.5f);
         
-        // 게임 진행 상태 확인
-        if (GameProgressManager.Instance == null || 
-            GameProgressManager.Instance.CurrentState == GameProgressManager.GameState.IntroVideo)
+        Debug.Log("[CinematicManager] PlayIntroVideoOnStart 시작");
+        
+        // GameProgressManager 상태 확인
+        if (GameProgressManager.Instance != null)
         {
+            Debug.Log("[CinematicManager] GameProgressManager 상태: " + GameProgressManager.Instance.CurrentState);
+            Debug.Log("[CinematicManager] hasSeenIntro: " + GameProgressManager.Instance.HasSeenIntro);
+        }
+        
+        // 게임 진행 상태 확인 - 더 관대한 조건
+        if (GameProgressManager.Instance == null || 
+            GameProgressManager.Instance.CurrentState == GameProgressManager.GameState.IntroVideo ||
+            !GameProgressManager.Instance.HasSeenIntro)
+        {
+            Debug.Log("[CinematicManager] 인트로 영상 재생 조건 만족 - 영상 시작");
             PlayCinematic(CinematicType.Intro);
+        }
+        else
+        {
+            Debug.LogWarning("[CinematicManager] 인트로 영상 재생 조건 불만족 - 상태: " + GameProgressManager.Instance?.CurrentState + ", hasSeenIntro: " + GameProgressManager.Instance?.HasSeenIntro);
         }
     }
 
@@ -413,10 +538,80 @@ public class CinematicManager : MonoBehaviour
 
     #endregion
 
+    #region Door Control
+
+    /// <summary>
+    /// 보스룸 문 열기 (BossIntro 영상 종료 후 호출)
+    /// </summary>
+    void OpenBossRoomDoor()
+    {
+        if (bossRoomDoor == null)
+        {
+            Debug.LogWarning("[CinematicManager] 보스룸 문이 설정되지 않았습니다!");
+            return;
+        }
+
+        if (bossRoomDoor.activeInHierarchy)
+        {
+            bossRoomDoor.SetActive(false);
+            Debug.Log("[CinematicManager] 보스룸 문 열림: " + bossRoomDoor.name + " 비활성화");
+            
+            // VolumeManager로 문 열림 사운드 재생
+            if (VolumeManager.Instance != null)
+            {
+                VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.DoorOpen, bossRoomDoor.transform.position);
+            }
+        }
+        else
+        {
+            Debug.Log("[CinematicManager] 보스룸 문이 이미 열려있습니다.");
+        }
+    }
+
+    /// <summary>
+    /// 보스룸 문 닫기 (필요시 사용)
+    /// </summary>
+    public void CloseBossRoomDoor()
+    {
+        if (bossRoomDoor == null)
+        {
+            Debug.LogWarning("[CinematicManager] 보스룸 문이 설정되지 않았습니다!");
+            return;
+        }
+
+        if (!bossRoomDoor.activeInHierarchy)
+        {
+            bossRoomDoor.SetActive(true);
+            Debug.Log("[CinematicManager] 보스룸 문 닫힘: " + bossRoomDoor.name + " 활성화");
+            
+            // VolumeManager로 문 닫힘 사운드 재생
+            if (VolumeManager.Instance != null)
+            {
+                VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.DoorClose, bossRoomDoor.transform.position);
+            }
+        }
+        else
+        {
+            Debug.Log("[CinematicManager] 보스룸 문이 이미 닫혀있습니다.");
+        }
+    }
+
+    /// <summary>
+    /// 수동으로 보스룸 문 설정
+    /// </summary>
+    public void SetBossRoomDoor(GameObject door)
+    {
+        bossRoomDoor = door;
+        Debug.Log("[CinematicManager] 보스룸 문 수동 설정: " + (door?.name ?? "null"));
+    }
+
+    #endregion
+
     #region Public Properties
 
     public bool IsPlayingVideo => isPlayingVideo;
     public CinematicType CurrentCinematic => currentCinematic;
+    public GameObject BossRoomDoor => bossRoomDoor;
 
     #endregion
 } 
