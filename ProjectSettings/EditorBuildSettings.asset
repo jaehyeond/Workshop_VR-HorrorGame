@@ -6,8 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Jaehyeon/Scenes/Main.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/Scenes/VideoScenes/IntroVideo.unity
+    guid: 7811ca432b038874c88e6d83fa5d6e89
+  - enabled: 1
+    path: Assets/Jaehyeon/Scenes/Beta(Map Light).unity
+    guid: 786a4650f9bd78843bbd3d137da664e4
+  - enabled: 1
+    path: Assets/Scenes/VideoScenes/BossIntroVideo.unity
+    guid: b4b99967519b3214eafb6bcf5c49990d
+  - enabled: 1
+    path: Assets/Scenes/VideoScenes/EndingVideo.unity
+    guid: b0d25019593224d42a1499a133f0528e
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 2909dd3a79a92374786abe4eb4b3f3b9, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
