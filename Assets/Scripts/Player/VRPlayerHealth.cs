@@ -20,6 +20,9 @@ public class VRPlayerHealth : MonoBehaviour
     public float invincibilityDuration = 1f;
     private bool isInvincible = false;
     
+    [Header("은신 무적")]
+    private bool isPlayerHiding = false;  // 은신 상태 (무적)
+    
     [Header("자동 회복")]
     public float recoveryDelay = 5f; // 5초 후 자동 회복
     public float recoveryRate = 0.1f; // 초당 10% 회복
@@ -40,6 +43,13 @@ public class VRPlayerHealth : MonoBehaviour
     {
         InitializeHealth();
         FindReferences();
+        
+        // 은신 이벤트 구독
+        if (CultistManager.Instance != null)
+        {
+            CultistManager.OnPlayerHidingChanged += OnPlayerHidingChanged;
+            Debug.Log("[VRPlayerHealth] 은신 이벤트 구독 완료");
+        }
     }
     
     void Update()
@@ -86,6 +96,13 @@ public class VRPlayerHealth : MonoBehaviour
     /// </summary>
     public void TakeDamage(float damage)
     {
+        // 은신 중이면 무적 (데미지 무시)
+        if (isPlayerHiding)
+        {
+            Debug.Log("[VRPlayerHealth] 은신 중 - 데미지 무시");
+            return;
+        }
+        
         if (isInvincible)
         {
             return;
@@ -168,11 +185,19 @@ public class VRPlayerHealth : MonoBehaviour
         
         float healthPercentage = currentHealth / maxHealth;
         
+        // 체력 100%일 때는 완전 정상 상태로
+        if (healthPercentage >= 1.0f)
+        {
+            postProcessingManager.ResetToNormalState();
+            Debug.Log("[VRPlayerHealth] 체력 100% - 완전 정상 상태로 복구");
+            return;
+        }
+        
         VRPostProcessingManager.HealthState healthState;
         
         if (healthPercentage >= 0.75f)
         {
-            // 75-100%: 연한 분홍 외각 (0.3 intensity)
+            // 75-99%: 연한 분홍 외각 (0.3 intensity)
             healthState = VRPostProcessingManager.HealthState.Good;
         }
         else if (healthPercentage >= 0.50f)
@@ -348,5 +373,32 @@ public class VRPlayerHealth : MonoBehaviour
             Debug.LogWarning($"[VRPlayerHealth] OnGUI 오류: {errorMessage}");
         }
         #endif
+    }
+    
+    // ==================== 은신 시스템 ====================
+    
+    /// <summary>
+    /// 은신 상태 변경 이벤트 핸들러
+    /// </summary>
+    private void OnPlayerHidingChanged(bool isHiding)
+    {
+        isPlayerHiding = isHiding;
+        Debug.Log($"[VRPlayerHealth] 은신 상태 변경: {(isHiding ? "무적 활성화" : "무적 해제")}");
+    }
+    
+    /// <summary>
+    /// 현재 은신 상태 확인
+    /// </summary>
+    public bool IsHiding => isPlayerHiding;
+    
+    /// <summary>
+    /// 컴포넌트 해제 시 이벤트 구독 해제
+    /// </summary>
+    private void OnDestroy()
+    {
+        if (CultistManager.Instance != null)
+        {
+            CultistManager.OnPlayerHidingChanged -= OnPlayerHidingChanged;
+        }
     }
 } 

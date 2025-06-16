@@ -44,6 +44,9 @@ public class VRPostProcessingManager : MonoBehaviour
     private float currentIntensity = 0f;
     private bool isEffectActive = false;
     
+    // 은신 상태 관리
+    private bool isPlayerHiding = false;
+    
     // Public 접근자들
     public EffectState CurrentState => currentState;
     public float CurrentIntensity => currentIntensity;
@@ -55,7 +58,8 @@ public class VRPostProcessingManager : MonoBehaviour
         Scared,
         LowHealth,
         Death,
-        Custom
+        Custom,
+        Hiding      // 은신 상태 추가
     }
     
     public enum HealthState
@@ -85,6 +89,14 @@ public class VRPostProcessingManager : MonoBehaviour
     {
         ResetToNormalState();
         InitializeHealthEffectSettings();
+        
+        // 은신 이벤트 구독
+        if (CultistManager.Instance != null)
+        {
+            CultistManager.OnPlayerHidingChanged += OnPlayerHidingChanged;
+            Debug.Log("[VRPostProcessingManager] 은신 이벤트 구독 완료");
+        }
+        
         Debug.Log("[VRPostProcessingManager] Post Processing 기반 VR 효과 시스템 초기화 완료");
     }
     
@@ -484,5 +496,115 @@ public class VRPostProcessingManager : MonoBehaviour
         currentIntensity = intensity;
         
         Debug.Log($"[VRPostProcessingManager] 효과 상태 변경: {newState} (강도: {intensity})");
+    }
+    
+    // ==================== 은신 시스템 ====================
+    
+    /// <summary>
+    /// 은신 상태 변경 이벤트 핸들러
+    /// </summary>
+    private void OnPlayerHidingChanged(bool isHiding)
+    {
+        isPlayerHiding = isHiding;
+        
+        if (isHiding)
+        {
+            SetHidingEffect();
+        }
+        else
+        {
+            ClearHidingEffect();
+        }
+        
+        Debug.Log($"[VRPostProcessingManager] 은신 상태 변경: {(isHiding ? "은신 시작" : "은신 해제")}");
+    }
+    
+    /// <summary>
+    /// 은신 시 진한 회색 비네팅 효과 적용
+    /// </summary>
+    public void SetHidingEffect()
+    {
+        if (vignette == null || colorAdjustments == null || bloom == null)
+        {
+            Debug.LogWarning("[VRPostProcessingManager] Post Processing 컴포넌트가 없습니다!");
+            return;
+        }
+        
+        Debug.Log("[VRPostProcessingManager] 은신 효과 적용: 진한 회색 비네팅");
+        
+        // 진한 회색 비네팅 효과 (기존보다 더 진하게)
+        vignette.intensity.value = 0.6f;                           // 더 진한 강도
+        vignette.color.value = new Color(0.3f, 0.3f, 0.3f, 1f);   // 더 진한 회색
+        
+        // 색상 조정으로 은밀한 분위기 연출
+        colorAdjustments.saturation.value = -30f;                  // 더 강한 채도 감소
+        colorAdjustments.contrast.value = 15f;                     // 대비 증가
+        colorAdjustments.hueShift.value = 0f;                      // 색조 변화 없음
+        colorAdjustments.colorFilter.value = new Color(0.8f, 0.8f, 0.8f, 1f); // 더 어둡게
+        
+        // 미세한 블룸 효과
+        bloom.intensity.value = 0.1f;
+        
+        currentState = EffectState.Hiding;
+        isEffectActive = true;
+        
+        Debug.Log("[VRPostProcessingManager] 은신 효과 적용 완료");
+    }
+    
+    /// <summary>
+    /// 은신 효과 해제 - 현재 체력에 맞는 상태로 복구
+    /// </summary>
+    public void ClearHidingEffect()
+    {
+        Debug.Log("[VRPostProcessingManager] 은신 효과 해제 - 체력별 효과로 복구");
+        
+        // 현재 체력 상태에 맞는 효과로 복구
+        var playerHealth = FindFirstObjectByType<VRPlayerHealth>();
+        if (playerHealth != null)
+        {
+            float healthPercentage = playerHealth.HealthPercentage;
+            
+            VRPostProcessingManager.HealthState healthState;
+            
+            if (healthPercentage >= 1.0f)
+            {
+                // 100%: 완전 정상
+                ResetToNormalState();
+                return;
+            }
+            else if (healthPercentage >= 0.75f)
+                healthState = VRPostProcessingManager.HealthState.Good;
+            else if (healthPercentage >= 0.50f)
+                healthState = VRPostProcessingManager.HealthState.Caution;
+            else if (healthPercentage >= 0.25f)
+                healthState = VRPostProcessingManager.HealthState.Danger;
+            else if (healthPercentage > 0f)
+                healthState = VRPostProcessingManager.HealthState.Critical;
+            else
+            {
+                ResetToNormalState();
+                return;
+            }
+            
+            SetHealthBasedEffect(healthState);
+        }
+        else
+        {
+            // VRPlayerHealth를 찾을 수 없으면 정상 상태로
+            ResetToNormalState();
+        }
+        
+        Debug.Log("[VRPostProcessingManager] 은신 효과 해제 완료");
+    }
+    
+    /// <summary>
+    /// 컴포넌트 해제 시 이벤트 구독 해제
+    /// </summary>
+    private void OnDestroy()
+    {
+        if (CultistManager.Instance != null)
+        {
+            CultistManager.OnPlayerHidingChanged -= OnPlayerHidingChanged;
+        }
     }
 } 
