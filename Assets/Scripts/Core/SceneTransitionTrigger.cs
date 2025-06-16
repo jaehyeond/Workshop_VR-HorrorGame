@@ -23,6 +23,13 @@ public class SceneTransitionTrigger : MonoBehaviour
 
     #region Unity Events
 
+    void Start()
+    {
+        // 씬 로드 시마다 트리거 상태 리셋 (재플레이 지원)
+        hasTriggered = false;
+        Debug.Log($"[SceneTransitionTrigger] {triggerType} 트리거 초기화 완료");
+    }
+
     void OnTriggerEnter(Collider other)
     {
         Debug.Log($"[SceneTransitionTrigger] 트리거 진입: {other.name} (태그: {other.tag})");
@@ -103,12 +110,26 @@ public class SceneTransitionTrigger : MonoBehaviour
         switch (triggerType)
         {
             case TriggerType.BossIntroVideo:
-                // 인트로를 봤고, 아직 보스 인트로를 보지 않았을 때
+                // 스마트 조건 체크: 현재 씬이 첫 번째 Beta 씬이면 항상 허용
+                string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                bool isFirstBetaScene = currentScene == "Beta(Map Light)";
+                
+                // 첫 번째 Beta 씬에서는 항상 BossIntroVideo 허용 (재플레이 지원)
+                if (isFirstBetaScene)
+                {
+                    Debug.Log($"[SceneTransitionTrigger] BossIntroVideo 조건 체크 (재플레이 모드):");
+                    Debug.Log($"  - 현재 씬: {currentScene}");
+                    Debug.Log($"  - 조건 결과: true (첫 번째 Beta 씬에서 항상 허용)");
+                    return true;
+                }
+                
+                // BetaAfterBoss 씬에서는 기존 조건 사용
                 bool hasSeenIntro = GameFlowManager.Instance.HasSeenIntro;
                 bool hasSeenBossIntro = GameFlowManager.Instance.HasSeenBossIntro;
                 bool condition = hasSeenIntro && !hasSeenBossIntro;
                 
-                Debug.Log($"[SceneTransitionTrigger] BossIntroVideo 조건 체크:");
+                Debug.Log($"[SceneTransitionTrigger] BossIntroVideo 조건 체크 (기존 로직):");
+                Debug.Log($"  - 현재 씬: {currentScene}");
                 Debug.Log($"  - HasSeenIntro: {hasSeenIntro}");
                 Debug.Log($"  - HasSeenBossIntro: {hasSeenBossIntro}");
                 Debug.Log($"  - 조건 결과: {condition}");
