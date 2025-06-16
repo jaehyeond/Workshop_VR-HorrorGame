@@ -344,7 +344,8 @@ public class VRPlayerHealth : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"[VRPlayerHealth] OnGUI 오류: {e.Message}");
+            string errorMessage = e?.Message ?? "알 수 없는 오류";
+            Debug.LogWarning($"[VRPlayerHealth] OnGUI 오류: {errorMessage}");
         }
         #endif
     }

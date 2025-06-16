@@ -153,9 +153,10 @@ public class CinematicSystemSetup : EditorWindow
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[CinematicSystemSetup] 설정 중 오류 발생: {e.Message}");
+            string errorMessage = e?.Message ?? "알 수 없는 오류";
+            Debug.LogError($"[CinematicSystemSetup] 설정 중 오류 발생: {errorMessage}");
             EditorUtility.DisplayDialog("Setup Error", 
-                $"설정 중 오류가 발생했습니다:\n{e.Message}", "확인");
+                $"설정 중 오류가 발생했습니다:\n{errorMessage}", "확인");
         }
 
         Debug.Log("🎮 Complete Game Flow System 설정 완료");
@@ -216,7 +217,8 @@ public class CinematicSystemSetup : EditorWindow
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[CinematicSystemSetup] GameFlowManager 생성 실패: {e.Message}");
+            string errorMessage = e?.Message ?? "알 수 없는 오류";
+            Debug.LogError($"[CinematicSystemSetup] GameFlowManager 생성 실패: {errorMessage}");
             return false;
         }
     }
@@ -295,7 +297,8 @@ public class CinematicSystemSetup : EditorWindow
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[CinematicSystemSetup] {sceneName} Scene 생성 실패: {e.Message}");
+            string errorMessage = e?.Message ?? "알 수 없는 오류";
+            Debug.LogError($"[CinematicSystemSetup] {sceneName} Scene 생성 실패: {errorMessage}");
             return false;
         }
     }
