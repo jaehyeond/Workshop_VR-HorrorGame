@@ -138,22 +138,25 @@ MonoBehaviour:
     pitchMax: 1.1
     is3D: 0
     maxDistance: 20
-  - sfxType: 16
-    audioClips: []
+  - sfxType: 11
+    audioClips:
+    - {fileID: 8300000, guid: 2e1307a139dd17b4286027500d96e260, type: 3}
     volume: 1
     pitchMin: 0.9
     pitchMax: 1.1
     is3D: 0
     maxDistance: 20
-  - sfxType: 0
-    audioClips: []
+  - sfxType: 6
+    audioClips:
+    - {fileID: 8300000, guid: cb85f1ca79a7b2d40af7ca64f3dc6f62, type: 3}
     volume: 1
     pitchMin: 0.9
     pitchMax: 1.1
     is3D: 0
     maxDistance: 20
-  - sfxType: 0
-    audioClips: []
+  - sfxType: 18
+    audioClips:
+    - {fileID: 8300000, guid: d8a56658a165cd248a5370da4c966d4f, type: 3}
     volume: 1
     pitchMin: 0.9
     pitchMax: 1.1
