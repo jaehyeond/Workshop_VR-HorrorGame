@@ -55,6 +55,11 @@ public class GameFlowManager : MonoBehaviour
 
     void Start()
     {
+        // ✅ 빌드 버전에서 자동 초기화 (VR 환경 재플레이 지원)
+        #if !UNITY_EDITOR
+        ResetGameProgressForBuild();
+        #endif
+        
         LoadGameProgress();
         HandleCurrentScene();
     }
@@ -66,6 +71,39 @@ public class GameFlowManager : MonoBehaviour
     void InitializeGameFlow()
     {
         DebugLog("[GameFlowManager] 게임 플로우 매니저 초기화 완료");
+    }
+
+    /// <summary>
+    /// 빌드 버전에서 게임 시작 시 자동 진행도 초기화
+    /// </summary>
+    void ResetGameProgressForBuild()
+    {
+        DebugLog("[GameFlowManager] 🎮 빌드 버전 - 자동 게임 상태 초기화");
+        
+        // 게임 진행 관련 PlayerPrefs만 초기화 (볼륨 설정은 유지)
+        string[] gameProgressKeys = {
+            "HasSeenIntro",
+            "HasSeenBossIntro", 
+            "HasSeenEnding",
+            "IsBossDefeated",
+            "PlayerPosX",
+            "PlayerPosY", 
+            "PlayerPosZ",
+            "PlayerRotY"
+        };
+        
+        foreach (string key in gameProgressKeys)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                PlayerPrefs.DeleteKey(key);
+            }
+        }
+        
+        PlayerPrefs.Save();
+        currentState = GameState.IntroVideo;
+        
+        DebugLog("[GameFlowManager] ✅ 빌드 버전 초기화 완료 - 매번 처음부터 시작");
     }
 
     void LoadGameProgress()
