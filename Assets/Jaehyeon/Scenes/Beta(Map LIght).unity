@@ -549,13 +549,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 174597941}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.02, y: 0, z: 6.43}
+  m_LocalRotation: {x: -0, y: 0.84929746, z: -0, w: 0.5279146}
+  m_LocalPosition: {x: -5.91, y: 0, z: -4.73}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2650238602468667183}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 116.271, z: 0}
 --- !u!1 &220634591
 GameObject:
   m_ObjectHideFlags: 0
@@ -602,6 +602,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &238681509
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 238681510}
+  m_Layer: 0
+  m_Name: Praying Spot (9)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &238681510
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 238681509}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.39230922, z: -0, w: 0.9198334}
+  m_LocalPosition: {x: -18.79, y: 4.07, z: -3.28}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2650238602468667183}
+  m_LocalEulerAnglesHint: {x: 0, y: -46.197, z: 0}
 --- !u!1 &254204805
 GameObject:
   m_ObjectHideFlags: 0
@@ -2951,6 +2982,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7951709917446013495, guid: 32151f27dfc8d684c960c626ac90248e, type: 3}
+      propertyPath: bgmClips.Array.data[1].bgmType
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3617,13 +3652,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1492174910}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 5.45, y: 0, z: 6.43}
+  m_LocalRotation: {x: -0, y: 0.7361256, z: -0, w: -0.6768451}
+  m_LocalPosition: {x: 5.4499993, y: 0, z: -6.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2650238602468667183}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 445.195, z: 0}
 --- !u!1 &1546595224
 GameObject:
   m_ObjectHideFlags: 0
@@ -4607,6 +4642,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1954234612}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &2007065553
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2007065554}
+  m_Layer: 0
+  m_Name: Praying Spot (8)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2007065554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007065553}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.39230922, z: -0, w: 0.9198334}
+  m_LocalPosition: {x: -6.075, y: 4.07, z: -0.655}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2650238602468667183}
+  m_LocalEulerAnglesHint: {x: 0, y: -46.197, z: 0}
 --- !u!1 &2011170752
 GameObject:
   m_ObjectHideFlags: 0
@@ -13739,7 +13805,7 @@ Transform:
   m_GameObject: {fileID: 8754012296730977076}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -15.78, y: 0, z: -5.27}
+  m_LocalPosition: {x: -11.46, y: 0, z: -1.14}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15850,6 +15916,8 @@ MonoBehaviour:
   - {fileID: 2396638204078480850}
   - {fileID: 174597942}
   - {fileID: 1492174911}
+  - {fileID: 2007065554}
+  - {fileID: 238681510}
   spawnEnemiesOnStart: 1
   bossPrefab: {fileID: 1721587517403622, guid: c6295e3ac14276d44a00c6e1c7860934, type: 3}
   bossPrayingSpots:
@@ -17491,6 +17559,8 @@ Transform:
   - {fileID: 599807862}
   - {fileID: 174597942}
   - {fileID: 1492174911}
+  - {fileID: 2007065554}
+  - {fileID: 238681510}
   - {fileID: 1001022549}
   m_Father: {fileID: 666554390589679348}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -40373,7 +40443,7 @@ Transform:
   m_GameObject: {fileID: 9057691719147709346}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 13.9, y: 3.985, z: -5.872}
+  m_LocalPosition: {x: 13.9, y: 3.985, z: -4.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

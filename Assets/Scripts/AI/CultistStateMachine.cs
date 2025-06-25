@@ -4,7 +4,7 @@ using UnityEngine.AI;
 public class CultistStateMachine : MonoBehaviour
 {
     [Header("상태 설정")]
-    public float idleObservationTime = 2.5f;
+    public float idleObservationTime = 0.8f;  // 2.5초 → 0.8초로 단축
     public float attackCooldown = 2f;
     public float pathRecalculationTime = 0.5f;
     
@@ -172,12 +172,20 @@ public class CultistStateMachine : MonoBehaviour
                 }
                 pathUpdateTimer = 0f;
                 
+                // ✅ 강화된 애니메이터 파라미터 설정 (상태 진입 시)
+                animator.SetBool("PlayerDetected", true);
+                animator.SetBool("StartChase", true);
+                animator.SetBool("InAttackRange", false);
+                animator.SetBool("ReturnToPraying", false);
+                
                 // 즉시 플레이어 위치로 목적지 설정
                 if (CultistManager.Instance != null && agent != null && agent.enabled && agent.isOnNavMesh)
                 {
                     Vector3 playerPos = CultistManager.Instance.GetPlayerPosition();
                     agent.SetDestination(playerPos);
                 }
+                
+                Debug.Log($"[{name}] Chasing 상태 진입! NavMesh 목적지 설정됨");
                 break;
                 
             case AIState.Attacking:
@@ -250,9 +258,12 @@ public class CultistStateMachine : MonoBehaviour
             // 추격 시작
             SetState(AIState.Chasing);
             
+            // ✅ 강화된 애니메이터 파라미터 설정
+            animator.SetBool("PlayerDetected", true);  // 플레이어 감지 확실히 설정
             animator.SetBool("StartChase", true);
             animator.SetBool("ReturnToPraying", false);
             animator.SetBool("LostPlayer", false);
+            animator.SetBool("InAttackRange", false);  // 공격 상태 초기화
             animator.SetFloat("IdleTimer", idleObservationTime);
             
             // 플레이어 발견 괴성 사운드 재생 (VolumeManager 사용)
@@ -261,7 +272,7 @@ public class CultistStateMachine : MonoBehaviour
                 VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.EnemySpotPlayer, transform.position, transform);
             }
             
-            // 목적지 설정은 EnterState에서 처리됨
+            Debug.Log($"[{name}] Observing → Chasing 전환! StartChase=true 설정됨");
         }
     }
     
@@ -321,11 +332,14 @@ public class CultistStateMachine : MonoBehaviour
     {
         SetState(AIState.Observing);
         
-        // 모든 이전 상태 파라미터 리셋
+        // ✅ 애니메이터 파라미터 최적화 - PlayerDetected는 유지
+        animator.SetBool("PlayerDetected", true);  // 플레이어 감지 상태 유지
         animator.SetBool("StartChase", false);
         animator.SetBool("ReturnToPraying", false);
         animator.SetBool("LostPlayer", false);
         animator.SetBool("InAttackRange", false);
+        
+        Debug.Log($"[{name}] StartObserving 호출됨! PlayerDetected=true 유지");
     }
     
     public void LoseTarget()

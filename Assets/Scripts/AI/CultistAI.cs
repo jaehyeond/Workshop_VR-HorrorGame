@@ -20,7 +20,7 @@ public class CultistAI : MonoBehaviour
     public Transform prayingSpot;
     
     [Header("디버그")]
-    public bool enableDebugLogs = false;
+    public bool enableDebugLogs = true;  // 디버깅을 위해 활성화
     
     // 컴포넌트 참조
     private NavMeshAgent agent;
@@ -398,7 +398,28 @@ public class CultistAI : MonoBehaviour
             case CultistStateMachine.AIState.Praying:
                 if (canSeePlayer)
                 {
-                    stateMachine.StartObserving();
+                    // ✅ 즉시 추격 옵션 (가까운 거리에서)
+                    float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+                    if (distanceToPlayer <= detectionRange * 0.6f) // 60% 이내면 즉시 추격
+                    {
+                        // 즉시 추격 시작
+                        stateMachine.SetState(CultistStateMachine.AIState.Chasing);
+                        animator.SetBool("PlayerDetected", true);
+                        animator.SetBool("StartChase", true);
+                        
+                        // 플레이어 발견 괴성 사운드 재생
+                        if (VolumeManager.Instance != null)
+                        {
+                            VolumeManager.Instance.PlaySFX(VolumeManager.SFXType.EnemySpotPlayer, transform.position, transform);
+                        }
+                        
+                        Debug.Log($"[{name}] 근거리 감지! 즉시 추격 시작 (거리: {distanceToPlayer:F2}m)");
+                    }
+                    else
+                    {
+                        // 일반적인 관찰 상태로 전환
+                        stateMachine.StartObserving();
+                    }
                     lastKnownPlayerPosition = player.position;
                 }
                 break;
